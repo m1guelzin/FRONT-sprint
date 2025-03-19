@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import logo from "../assets/logo.png"
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
@@ -40,6 +39,7 @@ function Home() {
       </Box>
       <Box sx={styles.body}>
         <Box sx={styles.welcomeBox}>
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/SENAI_S%C3%A3o_Paulo_logo.png/1200px-SENAI_S%C3%A3o_Paulo_logo.png" alt="Logo" style={styles.logo}/>
           <Typography sx={styles.bodyText}>Seja Bem-vindo</Typography>
         </Box>
       </Box>
@@ -70,7 +70,6 @@ function getStyles() {
       position: "fixed", // Fixar no topo
       top: 0,
       left: 0,
-      zIndex: 1000, // Garantir que fique acima dos outros elementos
     },
     headerText: {
       ml: "40vh",
@@ -104,7 +103,7 @@ function getStyles() {
           backgroundColor: "rgba(255, 0, 0, 0.55)",
         },
       },
-      mr: 8,
+      mr: 4,
       ml: 3,
       color: "white",
       backgroundColor: "rgba(255, 0, 0, 1)",
@@ -125,7 +124,12 @@ function getStyles() {
     },
     bodyText: {
       color: "#292929",
-      fontSize: 60,
+      fontSize: 50,
+      mt:'15px',
+    },
+    logo: {
+      width: "300px",
+      height: "auto",
     },
     welcomeBox: {
       width: "40vw", // Largura do retângulo
@@ -134,6 +138,7 @@ function getStyles() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      flexDirection:'column',
       borderRadius: "10px", // Bordas arredondadas opcionais
     },
     footer: {
