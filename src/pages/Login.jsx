@@ -9,10 +9,12 @@ import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import api from "../axios/axios";
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link , useNavigate} from "react-router-dom";
 
 function Login() {
   const styles = getStyles();
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.body.style.margin = "0";
@@ -40,6 +42,8 @@ function Login() {
     await api.postLogin(user).then(
       (response) => {
         alert(response.data.message);
+        localStorage.setItem("authenticated", true);
+        navigate("/inicial");
       },
       (error) => {
         console.log(error);
@@ -56,7 +60,7 @@ function Login() {
       <Box sx={styles.body}>
         <Box sx={styles.centerBox}>
           {/* <Avatar sx={{ margin: 1, backgroundColor: "red" }}>
-        </Avatar> */}
+          </Avatar> */}
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/SENAI_S%C3%A3o_Paulo_logo.png/1200px-SENAI_S%C3%A3o_Paulo_logo.png"
             alt="Logo"
@@ -75,7 +79,7 @@ function Login() {
               label="Cpf"
               name="cpf"
               margin="normal"
-              sx={{ mt: "50px", background:'#D9D9D9'}}
+              sx={{ mt: "50px", background: "#D9D9D9" }}
               value={user.cpf}
               onChange={onChange}
             />
@@ -87,10 +91,20 @@ function Login() {
               name="senha"
               margin="normal"
               type="password"
-              sx={{ mb: "15px", background:'#D9D9D9'}}
+              sx={{ mb: "15px", background: "#D9D9D9" }}
               value={user.senha}
               onChange={onChange}
             />
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <Typography sx={styles.centerText}>Não tem conta?</Typography>
+              <Typography
+                component={Link}
+                to={"/user"}
+                sx={styles.centerTextClick}
+              >
+                Cadastra-se!
+              </Typography>
+            </Box>
             <Box sx={{ display: "flex", justifyContent: "center" }}>
               <Button
                 type="submit"
@@ -187,6 +201,15 @@ function getStyles() {
     },
     footerText: {
       fontSize: 18,
+    },
+    centerText: {
+      mt: "5px",
+      fontSize: 15,
+    },
+    centerTextClick: {
+      mt: "5px",
+      fontSize: 15,
+      color: "red",
     },
   };
 }

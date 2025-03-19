@@ -8,11 +8,12 @@ import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import api from "../axios/axios";
-import { Link } from "react-router-dom";
+import { Link , useNavigate} from "react-router-dom";
 import { useEffect } from "react";
 
 function Cadastro() {
   const styles = getStyles();
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.body.style.margin = "0";
@@ -36,13 +37,14 @@ function Cadastro() {
   const handleSubmit = (event) => {
     event.preventDefault();
     cadastro();
-    // alert("Nome:"+user.name+" "+"Idade:"+user.name+" "+"Email:" + user.email + " " + "Senha:" + user.password);
   };
 
   async function cadastro() {
     await api.postCadastro(user).then(
       (response) => {
         alert(response.data.message);
+        localStorage.setItem("authenticated", true);
+        navigate("/login");
       },
       (error) => {
         console.log(error);
@@ -92,6 +94,7 @@ function Cadastro() {
                 id="cpf"
                 label="Cpf"
                 name="cpf"
+                type="number"
                 sx={styles.input}
                 value={user.cpf}
                 onChange={onChange}
