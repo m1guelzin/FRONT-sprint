@@ -11,12 +11,13 @@ import api from "../axios/axios";
 import { useEffect } from "react";
 import { Link , useNavigate} from "react-router-dom";
 
-function Login() {
+function Login({mensagem}) {
   const styles = getStyles();
 
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log(mensagem)
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.body.style.boxSizing = "border-box";
@@ -116,9 +117,6 @@ function Login() {
             </Box>
           </Box>
         </Box>
-      </Box>
-      <Box sx={styles.footer}>
-        <Typography sx={styles.footerText}>&copy; SENAI Franca SP</Typography>
       </Box>
     </Container>
   );

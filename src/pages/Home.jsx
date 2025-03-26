@@ -39,12 +39,13 @@ function Home() {
       </Box>
       <Box sx={styles.body}>
         <Box sx={styles.welcomeBox}>
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/SENAI_S%C3%A3o_Paulo_logo.png/1200px-SENAI_S%C3%A3o_Paulo_logo.png" alt="Logo" style={styles.logo}/>
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/SENAI_S%C3%A3o_Paulo_logo.png/1200px-SENAI_S%C3%A3o_Paulo_logo.png"
+            alt="Logo"
+            style={styles.logo}
+          />
           <Typography sx={styles.bodyText}>Seja Bem-vindo</Typography>
         </Box>
-      </Box>
-      <Box sx={styles.footer}>
-        <Typography sx={styles.footerText}>&copy; SENAI Franca SP</Typography>
       </Box>
     </Container>
   );
@@ -125,7 +126,7 @@ function getStyles() {
     bodyText: {
       color: "#292929",
       fontSize: 50,
-      mt:'15px',
+      mt: "15px",
     },
     logo: {
       width: "300px",
@@ -138,7 +139,7 @@ function getStyles() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      flexDirection:'column',
+      flexDirection: "column",
       borderRadius: "10px", // Bordas arredondadas opcionais
     },
     footer: {

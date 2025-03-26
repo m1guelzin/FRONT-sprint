@@ -12,6 +12,7 @@ import Paper from "@mui/material/Paper";
 import api from "../axios/axios";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
+import Avatar from "@mui/material/Avatar";
 import { Button, Container } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -62,42 +63,53 @@ function TelaSalas() {
 
   return (
     <Container sx={styles.container}>
-      <div>
-        <Box sx={styles.header}>
-          <Typography sx={styles.headerText}>Pagina Salas</Typography>
+      <Box sx={styles.header}>
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/SENAI_S%C3%A3o_Paulo_logo.png/1200px-SENAI_S%C3%A3o_Paulo_logo.png"
+          alt="Logo"
+          style={styles.logo}
+        />
+        <Avatar
+          sx={{
+            margin:3,
+            backgroundColor: "#9C9494",
+          }}
+        />
+      </Box>
+      <Box sx={styles.body}>
+        <Box sx={styles.centerBox}>
+          {salas.length === 0 ? (
+            <Typography>Carregando Lista de salas....</Typography>
+          ) : (
+            <div style={styles.centerBox}>
+              <Typography sx={styles.centerBoxText}>Salas Da Instituição</Typography>
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead style={{ backgroundColor: "#c50000" }}>
+                    <TableRow>
+                      <TableCell align="center">Nome</TableCell>
+                      <TableCell align="center">Capacidade</TableCell>
+                      <TableCell align="center">Localização</TableCell>
+                      <TableCell align="center">Equipamentos</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>{listSalas}</TableBody>
+                </Table>
+              </TableContainer>
+              <Button
+                fullWidth
+                variant="contained"
+                component={Link}
+                to="/"
+                onClick={logout}
+                sx={styles.buttonToCadastro}
+              >
+                Sair
+              </Button>
+            </div>
+          )}
         </Box>
-        <Box sx={styles.body}>
-          <Box sx={styles.centerBox}>
-            <Typography sx={styles.centerBoxText}>Lista de Salas</Typography>
-            <TableContainer component={Paper}>
-              <Table size="small">
-                <TableHead style={{ backgroundColor: "#c50000" }}>
-                  <TableRow>
-                    <TableCell align="center">Nome</TableCell>
-                    <TableCell align="center">Capacidade</TableCell>
-                    <TableCell align="center">Localização</TableCell>
-                    <TableCell align="center">Equipamentos</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>{listSalas}</TableBody>
-              </Table>
-            </TableContainer>
-            <Button
-              fullWidth
-              variant="contained"
-              component={Link}
-              to="/"
-              onClick={logout}
-              sx={styles.buttonToCadastro}
-            >
-              Sair
-            </Button>
-          </Box>
-        </Box>
-        <Box sx={styles.footer}>
-          <Typography sx={styles.footerText}>&copy; SENAI Franca SP</Typography>
-        </Box>
-      </div>
+      </Box>
     </Container>
   );
 }
@@ -121,7 +133,7 @@ function getStyles() {
       display: "flex",
       alignItems: "center",
       position: "fixed", // Fixar no topo
-      justifyContent: "center",
+      justifyContent: "space-between",
       top: 0,
       left: 0,
     },
@@ -150,8 +162,9 @@ function getStyles() {
       mt: "15px",
     },
     logo: {
-      width: "300px",
+      width: "250px",
       height: "auto",
+      padding: "30px",
     },
     centerBox: {
       width: "60vw", // Largura do retângulo

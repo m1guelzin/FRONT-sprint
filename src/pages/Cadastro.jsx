@@ -1,9 +1,7 @@
 import * as React from "react";
 import TextFields from "@mui/material/TextField";
 import Button from "@mui/material/Button";
-import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
-import LockOutlinedIcon from "@mui/icons-material/LockClockOutlined";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
@@ -150,9 +148,6 @@ function Cadastro() {
             </Box>
           </Box>
         </Box>
-      </Box>
-      <Box sx={styles.footer}>
-        <Typography sx={styles.footerText}>&copy; SENAI Franca SP</Typography>
       </Box>
     </Container>
   );
