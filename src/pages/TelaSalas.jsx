@@ -62,24 +62,10 @@ function TelaSalas() {
   }, []);
 
   return (
-    <Container sx={styles.container}>
-      <Box sx={styles.header}>
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/SENAI_S%C3%A3o_Paulo_logo.png/1200px-SENAI_S%C3%A3o_Paulo_logo.png"
-          alt="Logo"
-          style={styles.logo}
-        />
-        <Avatar
-          sx={{
-            margin:3,
-            backgroundColor: "#9C9494",
-          }}
-        />
-      </Box>
       <Box sx={styles.body}>
         <Box sx={styles.centerBox}>
           {salas.length === 0 ? (
-            <Typography>Carregando Lista de salas....</Typography>
+            <Typography sx={styles.centerBoxText}>Carregando Lista de salas....</Typography>
           ) : (
             <div style={styles.centerBox}>
               <Typography sx={styles.centerBoxText}>Salas Da Instituição</Typography>
@@ -110,7 +96,6 @@ function TelaSalas() {
           )}
         </Box>
       </Box>
-    </Container>
   );
 }
 
@@ -118,29 +103,6 @@ export default TelaSalas;
 
 function getStyles() {
   return {
-    container: {
-      minHeight: "100vh",
-      width: "100vw",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexDirection: "column",
-    },
-    header: {
-      backgroundColor: "#C5C2C2",
-      width: "100vw", // Define a largura total da tela
-      height: "11vh",
-      display: "flex",
-      alignItems: "center",
-      position: "fixed", // Fixar no topo
-      justifyContent: "space-between",
-      top: 0,
-      left: 0,
-    },
-    headerText: {
-      color: "#292929",
-      fontSize: 30,
-    },
     buttonToCadastro: {
       color: "white",
       backgroundColor: "#c50000",
@@ -168,7 +130,7 @@ function getStyles() {
     },
     centerBox: {
       width: "60vw", // Largura do retângulo
-      height: "60vh", // Altura do retângulo
+      height: "80vh", // Altura do retângulo
       backgroundColor: "#dcdcdc",
       display: "flex",
       alignItems: "center",
@@ -180,20 +142,6 @@ function getStyles() {
       color: "#292929",
       fontSize: 25,
       backgroundColor: "#dcdcdc",
-    },
-    footer: {
-      backgroundColor: "#C5C2C2",
-      width: "100vw",
-      height: "7vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      position: "fixed", // Fixa no final da tela
-      bottom: 0, // Cola o footer na parte inferior
-      left: 0,
-    },
-    footerText: {
-      fontSize: 18,
     },
     centerText: {
       mt: "5px",

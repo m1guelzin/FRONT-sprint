@@ -18,14 +18,13 @@ const Footer = () => {
     return {
         footer: {
             backgroundColor: "#C5C2C2",
-            width: "100vw",
             height: "7vh",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            position: "fixed", // Fixa no final da tela
             bottom: 0, // Cola o footer na parte inferior
             left: 0,
+            
           },
           footerText: {
             fontSize: 18,

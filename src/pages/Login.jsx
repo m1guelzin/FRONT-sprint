@@ -1,9 +1,7 @@
 import * as React from "react";
 import TextFields from "@mui/material/TextField";
 import Button from "@mui/material/Button";
-import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
-import LockOutlinedIcon from "@mui/icons-material/LockClockOutlined";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
@@ -17,7 +15,7 @@ function Login({mensagem}) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log(mensagem)
+    console.log({mensagem})
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.body.style.boxSizing = "border-box";
@@ -54,10 +52,6 @@ function Login({mensagem}) {
   }
 
   return (
-    <Container sx={styles.container}>
-      <Box sx={styles.header}>
-        <Typography sx={styles.headerText}>Pagina Login</Typography>
-      </Box>
       <Box sx={styles.body}>
         <Box sx={styles.centerBox}>
           {/* <Avatar sx={{ margin: 1, backgroundColor: "red" }}>
@@ -118,36 +112,12 @@ function Login({mensagem}) {
           </Box>
         </Box>
       </Box>
-    </Container>
   );
 }
 export default Login;
 
 function getStyles() {
   return {
-    container: {
-      minHeight: "100vh",
-      width: "100vw",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexDirection: "column",
-    },
-    header: {
-      backgroundColor: "#C5C2C2",
-      width: "100vw", // Define a largura total da tela
-      height: "11vh",
-      display: "flex",
-      alignItems: "center",
-      position: "fixed", // Fixar no topo
-      justifyContent: "center",
-      top: 0,
-      left: 0,
-    },
-    headerText: {
-      color: "#292929",
-      fontSize: 30,
-    },
     buttonToCadastro: {
       color: "white",
       backgroundColor: "rgba(255, 0, 0, 1)",
@@ -161,7 +131,7 @@ function getStyles() {
     },
     body: {
       width: "100vw", // Ocupa 100% da largura
-      height: "100vh", // Ocupa 100% da altura
+      height: "83vh", // Ocupa 100% da altura
       backgroundColor: "#F60000",
       display: "flex",
       alignItems: "center",
@@ -185,20 +155,6 @@ function getStyles() {
       justifyContent: "center",
       flexDirection: "column",
       borderRadius: "10px", // Bordas arredondadas opcionais
-    },
-    footer: {
-      backgroundColor: "#C5C2C2",
-      width: "100vw",
-      height: "7vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      position: "fixed", // Fixa no final da tela
-      bottom: 0, // Cola o footer na parte inferior
-      left: 0,
-    },
-    footerText: {
-      fontSize: 18,
     },
     centerText: {
       mt: "5px",

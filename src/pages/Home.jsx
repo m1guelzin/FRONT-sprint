@@ -8,14 +8,15 @@ import { useEffect } from "react";
 function Home() {
   const styles = getStyles();
 
-  useEffect(() => {
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
-    document.body.style.boxSizing = "border-box";
-  }, []);
+    useEffect(() => {
+      document.body.style.margin = "0";
+      document.body.style.padding = "0";
+      document.body.style.boxSizing = "border-box";
+    }, []);
+
 
   return (
-    <Container sx={styles.container}>
+    <Box>
       <Box sx={styles.header}>
         <Box sx={{ flex: 1, textAlign: "center" }}>
           <Typography sx={styles.headerText}>Pagina Home</Typography>
@@ -47,15 +48,16 @@ function Home() {
           <Typography sx={styles.bodyText}>Seja Bem-vindo</Typography>
         </Box>
       </Box>
-    </Container>
+      <Box sx={styles.footer}>
+        <Typography sx={styles.footerText}>&copy; SENAI Franca SP</Typography>
+      </Box>
+    </Box>
   );
 }
 
 function getStyles() {
   return {
     container: {
-      minHeight: "100vh",
-      width: "100vw",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -63,14 +65,11 @@ function getStyles() {
     },
     header: {
       backgroundColor: "#C5C2C2",
-      width: "100vw", // Define a largura total da tela
-      height: "11vh",
+      maxWidth: "100vw", 
+      height: "10vh",
       display: "flex",
       alignItems: "center",
       justifyContent: "end",
-      position: "fixed", // Fixar no topo
-      top: 0,
-      left: 0,
     },
     headerText: {
       ml: "40vh",
@@ -116,8 +115,8 @@ function getStyles() {
       textTransform: "none",
     },
     body: {
-      width: "100vw", // Ocupa 100% da largura
-      height: "100vh", // Ocupa 100% da altura
+      maxWidth: "100vw", 
+      height: "80vh", // Ocupa 100% da altura
       backgroundColor: "#F60000",
       display: "flex",
       alignItems: "center",
@@ -144,14 +143,11 @@ function getStyles() {
     },
     footer: {
       backgroundColor: "#C5C2C2",
-      width: "100vw",
-      height: "7vh",
+      maxWidth: "100vw", 
+      height: "10vh",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      position: "fixed", // Fixa no final da tela
-      bottom: 0, // Cola o footer na parte inferior
-      left: 0,
     },
     footerText: {
       fontSize: 18,

@@ -5,6 +5,8 @@ import Home from "./pages/Home";
 import TelaSalas from "./pages/TelaSalas";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Footer from "./components/Footer";
+import DefaultLayout from "./components/DefaultLayout";
+import Header from "./components/Header";
 
 function App() {
   return (
@@ -18,21 +20,34 @@ function App() {
             }
           />
 
-          <Route path="/login" element={<Login mensagem={'LOGIN'} />} />
+          <Route
+            path="/login"
+            element={
+              <DefaultLayout headerRender = {1} mensagem={"Pagina de Login"} >
+                <Login />
+              </DefaultLayout>
+            }
+          />
 
-          <Route path="/user" element={<Cadastro />} />
+          <Route
+            path="/user"
+            element={
+              <DefaultLayout headerRender = {1} mensagem={"Pagina de Cadastro"}>
+                <Cadastro />
+              </DefaultLayout>
+            }
+          />
 
           <Route
             path="/inicial"
             element={
-              <ProtectedRoute  mensagem={'Tela salas'}>
+              <ProtectedRoute>
                 <TelaSalas />
               </ProtectedRoute>
             }
           />
         </Routes>
       </BrowserRouter>
-      <Footer /> 
     </div>
   );
 }
