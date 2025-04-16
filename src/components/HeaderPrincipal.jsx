@@ -1,9 +1,13 @@
 import React from "react";
 import Box from "@mui/material/Box";
-import Avatar from "@mui/material/Avatar";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import IconButton from "@mui/material/IconButton";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const HeaderPrincpal = () => {
   const styles = getStyles();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <Box sx={styles.header}>
@@ -12,34 +16,33 @@ const HeaderPrincpal = () => {
         alt="Logo"
         style={styles.logo}
       />
-      <Avatar
-        sx={{
-          margin: 3,
-          backgroundColor: "#9C9494",
-        }}
-      />
+
+      {location.pathname !== "/perfil" && (
+        <IconButton onClick={() => navigate("/perfil")} sx={{ margin: 2 }}>
+          <AccountCircleIcon sx={{ fontSize: 60, borderRadius: 6 }} />
+        </IconButton>
+      )}
     </Box>
   );
 };
-
 function getStyles() {
   return {
     header: {
-        backgroundColor: "#C5C2C2",
-        height: "11vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-      },
-      headerText: {
-        color: "#292929",
-        fontSize: 30,
-      },
-      logo: {
-        width: "250px",
-        height: "auto",
-        padding: "30px",
-      },
+      backgroundColor: "#C5C2C2",
+      height: "11vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    headerText: {
+      color: "#292929",
+      fontSize: 30,
+    },
+    logo: {
+      width: "250px",
+      height: "auto",
+      padding: "30px",
+    },
   };
 }
 

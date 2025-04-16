@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login";
-import Cadastro from "./pages/Cadastro";
-import Home from "./pages/Home";
-import TelaSalas from "./pages/TelaSalas";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Footer from "./components/Footer";
 import DefaultLayout from "./components/DefaultLayout";
 import Header from "./components/Header";
+
+import Login from "./pages/Login";
+import Cadastro from "./pages/Cadastro";
+import Home from "./pages/Home";
+import TelaSalas from "./pages/TelaSalas";
+import Perfil from "./pages/Perfil"
 
 function App() {
   return (
@@ -45,6 +47,15 @@ function App() {
                 <TelaSalas />
               </ProtectedRoute>
             }
+          />
+
+          <Route
+          path="/perfil"
+          element={
+            <ProtectedRoute>
+              <Perfil/>
+            </ProtectedRoute>
+          }
           />
         </Routes>
       </BrowserRouter>

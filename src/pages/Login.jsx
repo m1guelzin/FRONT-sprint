@@ -42,6 +42,7 @@ function Login({mensagem}) {
       (response) => {
         alert(response.data.message);
         localStorage.setItem("authenticated", true);
+        localStorage.setItem("id_usuario", response.data.user.id_usuario)
         navigate("/inicial");
       },
       (error) => {
