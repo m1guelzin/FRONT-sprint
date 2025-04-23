@@ -21,10 +21,6 @@ function TelaSalas() {
   const styles = getStyles();
   const navigate = useNavigate();
 
-  function logout() {
-    localStorage.removeItem("authenticated");
-    navigate("/");
-  }
 
   useEffect(() => {
     document.body.style.margin = "0";
@@ -82,16 +78,6 @@ function TelaSalas() {
                   <TableBody>{listSalas}</TableBody>
                 </Table>
               </TableContainer>
-              <Button
-                fullWidth
-                variant="contained"
-                component={Link}
-                to="/"
-                onClick={logout}
-                sx={styles.buttonToCadastro}
-              >
-                Sair
-              </Button>
             </div>
           )}
         </Box>

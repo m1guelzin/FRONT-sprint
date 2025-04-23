@@ -9,6 +9,7 @@ import {
   Button,
 } from "@mui/material";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { useNavigate } from "react-router-dom";
 
 const Perfil = () => {
   const [userData, setUserData] = useState({});
@@ -23,6 +24,9 @@ const Perfil = () => {
   const handleCloseDropdown = () => {
     setAnchorEl(null);
   };
+
+  const navigate = useNavigate();
+
 
   const formatarData = (dataStr) => {
     const [ano, mes, dia] = dataStr.split("-");

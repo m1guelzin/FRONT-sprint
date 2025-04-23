@@ -8,24 +8,20 @@ import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import Home from "./pages/Home";
 import TelaSalas from "./pages/TelaSalas";
-import Perfil from "./pages/Perfil"
+import Perfil from "./pages/Perfil";
+import TelaInicial from "./pages/TelaInicial";
 
 function App() {
   return (
     <div>
       <BrowserRouter>
         <Routes>
-          <Route
-            path="/"
-            element={
-                <Home />
-            }
-          />
+          <Route path="/" element={<Home />} />
 
           <Route
             path="/login"
             element={
-              <DefaultLayout headerRender = {1} mensagem={"Pagina de Login"} >
+              <DefaultLayout headerRender={1} mensagem={"Pagina de Login"}>
                 <Login />
               </DefaultLayout>
             }
@@ -34,7 +30,7 @@ function App() {
           <Route
             path="/user"
             element={
-              <DefaultLayout headerRender = {1} mensagem={"Pagina de Cadastro"}>
+              <DefaultLayout headerRender={1} mensagem={"Pagina de Cadastro"}>
                 <Cadastro />
               </DefaultLayout>
             }
@@ -43,6 +39,15 @@ function App() {
           <Route
             path="/inicial"
             element={
+              <DefaultLayout headerRender={1} mensagem={"Pagina Inicial"}>
+                <TelaInicial />
+              </DefaultLayout>
+            }
+          />
+
+          <Route
+            path="/salas"
+            element={
               <ProtectedRoute>
                 <TelaSalas />
               </ProtectedRoute>
@@ -50,12 +55,12 @@ function App() {
           />
 
           <Route
-          path="/perfil"
-          element={
-            <ProtectedRoute>
-              <Perfil/>
-            </ProtectedRoute>
-          }
+            path="/perfil"
+            element={
+              <ProtectedRoute>
+                <Perfil />
+              </ProtectedRoute>
+            }
           />
         </Routes>
       </BrowserRouter>
