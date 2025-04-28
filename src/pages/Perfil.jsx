@@ -34,6 +34,12 @@ const Perfil = () => {
   };
 
   useEffect(() => {
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    document.body.style.boxSizing = "border-box";
+  }, []);
+
+  useEffect(() => {
     const id_usuario = localStorage.getItem("id_usuario");
 
     if (!id_usuario) return;

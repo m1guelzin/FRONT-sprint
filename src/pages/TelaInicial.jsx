@@ -7,6 +7,7 @@ import PersonIcon from "@mui/icons-material/Person";
 const TelaInicial = () => {
   const navigate = useNavigate();
 
+  
   const styles = getStyles();
 
   return (
