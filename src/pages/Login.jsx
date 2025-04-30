@@ -42,7 +42,9 @@ function Login({mensagem}) {
       (response) => {
         alert(response.data.message);
         localStorage.setItem("authenticated", true);
-        localStorage.setItem("id_usuario", response.data.user.id_usuario)
+        localStorage.setItem("id_usuario", response.data.user.id_usuario);
+        localStorage.setItem("token", response.data.token);
+        console.log("Token do usuario: ", response.data.token);
         navigate("/inicial");
       },
       (error) => {

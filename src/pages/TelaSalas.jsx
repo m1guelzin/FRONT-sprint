@@ -15,7 +15,6 @@ function TelaSala() {
   const [salaSelecionada, setSalaSelecionada] = useState(null);
   const [horarioSelecionadoInicio, setHorarioSelecionadoInicio] = useState(null);
   const [modalAberto, setModalAberto] = useState(false);
-  const horasPossiveis = Array.from({ length: 16 }, (_, index) => 7 + index); // 7h às 22h
 
   useEffect(() => {
     document.body.style.margin = "0";
@@ -29,6 +28,7 @@ function TelaSala() {
         try {
           const response = await sheets.getSalasDisponiveisPorData(dataSelecionada);
           setSalasDisponiveis(response.data.salas_disponiveis);
+          console.log("salas disponiveis", response.data.salas_disponiveis);
         } catch (error) {
           console.error("Erro ao buscar salas disponíveis:", error);
           setSalasDisponiveis([]);
@@ -37,7 +37,7 @@ function TelaSala() {
         setSalasDisponiveis([]);
         setSalaSelecionada(null);
       }
-      setHorariosDisponiveisPorSala({}); // Limpa os horários ao mudar a data
+      
       setHorarioSelecionadoInicio(null);
     }
 
@@ -56,7 +56,6 @@ function TelaSala() {
           setHorariosDisponiveisPorSala(horariosOrganizados);
         } catch (error) {
           console.error("Erro ao buscar horários disponíveis:", error);
-          setHorariosDisponiveisPorSala({});
         }
       } else {
         setHorariosDisponiveisPorSala({});
@@ -81,6 +80,20 @@ function TelaSala() {
     setModalAberto(true);
   }
 
+  function handleDataChange(event) {
+    const selectedDate = event.target.value;
+    const dataAtual = new Date().toISOString().split('T')[0];
+
+    if (selectedDate < dataAtual) {
+      alert("Não é possível selecionar datas anteriores ao dia atual.");
+      // Opcional: resetar o valor do input
+      // event.target.value = dataAtual;
+      // setDataSelecionada(dataAtual);
+    } else {
+      setDataSelecionada(selectedDate);
+    }
+  }
+
   const handleFecharModal = () => {
     setModalAberto(false);
     setHorarioSelecionadoInicio(null);
@@ -88,29 +101,33 @@ function TelaSala() {
 
   const handleConfirmarReserva = async () => {
     if (salaSelecionada && horarioSelecionadoInicio && dataSelecionada) {
-      const horarioFim = `${parseInt(horarioSelecionadoInicio.split(':')[0]) + 1}:00`;
+      const horarioInicioAPI = `${horarioSelecionadoInicio}:00`; // Adiciona os segundos
+      const horaFim = parseInt(horarioSelecionadoInicio.split(':')[0]) + 1;
+      const horarioFimAPI = `${horaFim < 10 ? '0' + horaFim : horaFim}:00:00`; // Adiciona os segundos e formata a hora com zero à esquerda se necessário
+  
+      const userId = localStorage.getItem("id_usuario");
+  
       const reservaData = {
         fkid_salas: salaSelecionada.id_salas,
         data_reserva: dataSelecionada,
-        horario_inicio: horarioSelecionadoInicio,
-        horario_fim: horarioFim,
-        id_usuario: 1, // Substituir pelo ID do usuário logado
+        horario_inicio: horarioInicioAPI,
+        horario_fim: horarioFimAPI,
+        id_usuario: userId,
       };
-
+  
+      console.log("Dados da reserva a serem enviados:", reservaData);
+  
       try {
         const response = await sheets.criarReserva(reservaData);
         console.log("Reserva criada com sucesso:", response.data);
         setModalAberto(false);
-        // Adicionar feedback de sucesso ao usuário
-        alert("Reserva realizada com sucesso!");
-        // Limpar seleção após a reserva
+        alert(response.data.message);
         setSalaSelecionada(null);
         setHorarioSelecionadoInicio(null);
         setDataSelecionada("");
       } catch (error) {
         console.error("Erro ao criar reserva:", error);
-        // Adicionar feedback de erro ao usuário
-        alert("Erro ao realizar a reserva. Tente novamente.");
+        alert(error.response.data.error);
       }
     } else {
       alert("Por favor, selecione a sala, data e horário.");
@@ -126,21 +143,24 @@ function TelaSala() {
       <Box sx={styles.boxWrapper}>
         {/* Painel Esquerdo: Salas Disponíveis */}
         <Box sx={styles.leftPanel}>
-          <Box sx={styles.title}>
-            <Typography variant="h6" color="black" mb={2}>
-              SALAS DISPONÍVEIS
-            </Typography>
+          <Box sx={styles.leftPanelTop}>
+            <Box sx={styles.title}>
+              <Typography variant="h6" color="black">
+                SALAS DA INSTITUIÇÃO
+              </Typography>
+            </Box>
+            <TextField
+
+              type="date"
+              variant="outlined"
+              value={dataSelecionada}
+              onChange={handleDataChange}
+              sx={styles.dateInput}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
           </Box>
-          <TextField
-            type="date"
-            variant="outlined"
-            value={dataSelecionada}
-            onChange={handleDataChange}
-            sx={styles.dateInput}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
           {dataSelecionada === "" ? (
             <Typography color="white">Selecione uma data para ver as salas disponíveis.</Typography>
           ) : salasDisponiveis.length === 0 ? (
@@ -157,6 +177,7 @@ function TelaSala() {
                 onClick={() => selecionarSala(sala)}
               >
                 <Typography variant="h6">{sala.nome_da_sala}</Typography>
+                <Typography variant="h6">{sala.localizacao}</Typography>
               </Box>
             ))
           )}
@@ -164,12 +185,12 @@ function TelaSala() {
 
         {/* Painel Direito: Horários Disponíveis */}
         <Box sx={styles.rightPanel}>
-          <Typography variant="h4" color="white" mb={2}>
+          <Typography variant="h4" color="black" mb={2}>
             HORÁRIOS DISPONÍVEIS
           </Typography>
           {salaSelecionada ? (
             <>
-              <Typography color="white" mb={2}>
+              <Typography color="black" mb={2}>
                 Sala selecionada: <strong>{salaSelecionada.nome_da_sala}</strong>
               </Typography>
               <Box sx={styles.horariosGrid}>
@@ -186,18 +207,12 @@ function TelaSala() {
                   </Button>
                 ))}
                 {horariosDisponiveisParaEstaSala.length === 0 && (
-                  <Typography color="white">Não há horários disponíveis para esta sala na data selecionada.</Typography>
+                  <Typography color="black">Não há horários disponíveis para esta sala na data selecionada.</Typography>
                 )}
               </Box>
-              {horarioSelecionadoInicio && (
-                <Typography mt={2} color="white">
-                  Horário selecionado: {horarioSelecionadoInicio} -{" "}
-                  {`${parseInt(horarioSelecionadoInicio.split(':')[0]) + 1}:00`}
-                </Typography>
-              )}
             </>
           ) : (
-            <Typography color="white">Selecione uma sala para ver os horários disponíveis.</Typography>
+            <Typography color="black">Selecione uma sala para ver os horários disponíveis.</Typography>
           )}
         </Box>
       </Box>
@@ -210,31 +225,38 @@ function TelaSala() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={styles.modalStyle}>
-          <Typography id="modal-modal-title" variant="h6" component="h2" mb={2}>
-            Confirmar Reserva
+          
+          <Typography id="modal-modal-title" fontSize={30} variant="h5" component="h2" mb={2}>
+            ESPECIFICAÇÕES GERAIS DA SALA
           </Typography>
           {salaSelecionada && horarioSelecionadoInicio && dataSelecionada && (
             <>
-              <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                <strong>{salaSelecionada.nome_da_sala}</strong>
+              <Typography id="modal-modal-description" fontSize={24} sx={{ mt: 2 }}>
+                Nome da sala: <strong>{salaSelecionada.nome_da_sala}</strong>
               </Typography>
-              <Typography id="modal-modal-description" sx={{ mt: 1 }}>
+              <Typography id="modal-modal-description" fontSize={20} sx={{ mt: 2 }}>
+                Capacidade: <strong>{salaSelecionada.capacidade}</strong>
+              </Typography>
+              <Typography id="modal-modal-description" fontSize={20} sx={{ mt: 0 }}>
+                Localização: <strong>{salaSelecionada.localizacao}</strong>
+              </Typography>
+              <Typography id="modal-modal-description" fontSize={20} sx={{ mt: 0 }}>
+                Equipamentos: <strong>{salaSelecionada.equipamentos}</strong>
+              </Typography>
+              <Typography id="modal-modal-description" fontSize={20} sx={{ mt: 2 }}>
                 Data da Reserva: <strong>{dataSelecionada}</strong>
               </Typography>
-              <Typography id="modal-modal-description" sx={{ mt: 1 }}>
+              <Typography id="modal-modal-description" fontSize={20} sx={{ mt: 0 }}>
                 Horário de Início: <strong>{horarioSelecionadoInicio}</strong>
-              </Typography>
-              <Typography id="modal-modal-description" sx={{ mt: 1 }}>
-                Horário de Fim: <strong>{`${parseInt(horarioSelecionadoInicio.split(':')[0]) + 1}:00`}</strong>
               </Typography>
             </>
           )}
           <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-            <Button onClick={handleFecharModal} color="primary">
+            <Button sx={styles.modalCloseButton} onClick={handleFecharModal} color="error">
               Fechar
             </Button>
-            <Button onClick={handleConfirmarReserva} variant="contained" color="primary">
-              Reservar
+            <Button sx={styles.modalConfirmButton} onClick={handleConfirmarReserva} variant="contained" color="success">
+              Confirmar Reserva?
             </Button>
           </Box>
         </Box>
@@ -249,65 +271,113 @@ export default TelaSala;
 
 const styles = {
   container: {
-    backgroundColor: "red",
+    backgroundColor: "red", // Cor de fundo vermelha do protótipo
     minHeight: "100vh",
     padding: "20px",
     width: "100vw",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center", // Centralizar conteúdo horizontalmente
   },
   boxWrapper: {
     display: "flex",
     gap: "20px",
+    maxWidth: "1800px", // Largura máxima para evitar que os painéis fiquem muito largos
+    width: "100%",
   },
   leftPanel: {
     flex: 1,
-  },
-  rightPanel: {
-    flex: 1,
-  },
-  dateInput: {
-    width: "100%",
-    marginBottom: "20px",
-    backgroundColor: "white",
-    borderRadius: "5px",
-  },
-  salaCard: {
-    backgroundColor: "#eee",
-    padding: "10px",
     borderRadius: "8px",
-    marginBottom: "10px",
-    cursor: "pointer",
+    padding: "15px",
+    display: "flex",
+    flexDirection: "column", // Organizar título, seletor de data e lista de salas verticalmente
   },
-  horariosGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))",
-    gap: "10px",
-    marginTop: "20px",
-  },
-  horarioButton: {
-    backgroundColor: "#ccc",
-    border: "none",
-    padding: "10px",
-    borderRadius: "6px",
-    cursor: "pointer",
+  leftPanelTop: { // Novo estilo para agrupar título e seletor de data
+    display: "flex",
+    justifyContent: "space-between", // Espaçar os elementos horizontalmente
+    alignItems: "center", // Alinhar verticalmente ao centro
+    marginBottom: "15px", // Espaço abaixo desta linha
+    width: "100%", // Ocupar toda a largura do painel esquerdo
   },
   title: {
     backgroundColor: "white",
-    width: "33vh",
-    minHeight: "6vh",
-    margin: "10px",
+    padding: "10px 15px",
+    borderRadius: "5px",
+    textAlign: "center",
+    // Remova o marginBottom daqui, pois o espaçamento será controlado por leftPanelTop
+  },
+  dateInput: {
+    width: "25%",
+    marginBottom: "20px",
+    backgroundColor: "white",
+    borderRadius: "5px",
+    padding: "10px",
+    boxSizing: "border-box", // Ajustar a largura para o conteúdo
+  },
+  // ... restante dos seus estilos ...
+  rightPanel: {
+    flex: 1,
+    backgroundColor: "#f5f5f5", // Outro tom de cinza claro
+    borderRadius: "8px",
+    padding: "15px",
     display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: "column",
+    alignItems: "center", // Centralizar os botões de horário
+  },
+  title: {
+    backgroundColor: "white",
+    padding: "10px 15px",
+    borderRadius: "5px",
+    marginBottom: "15px",
+    textAlign: "center",
+  },
+  salaCard: {
+    backgroundColor: "#dcdcdc", // Tom de cinza mais escuro para os cards de sala
+    padding: "12px",
+    borderRadius: "6px",
+    marginBottom: "8px",
+    cursor: "pointer",
+    "&:hover": {
+      backgroundColor: "#c0c0c0", // Feedback visual ao passar o mouse
+    },
+  },
+  horariosGrid: {
+    flexDirection:"row",
+    fleWrap:"wrap",
+    justifyContent:"space-between"
+  },
+  horarioButton: {
+    color: "black",
+    padding: 2,
+    borderRadius: 5,
+    backgroundColor:"#e1f5fe",
+    marginBottom:1,
+    margin:1,
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    "&:hover": {
+      backgroundColor: "#b0b0b0",
+    },
   },
   modalStyle: {
+    backgroundColor: "#808080",
+    color:"#808080", 
     position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: 400,
+    width: 500,
     backgroundColor: 'white',
     border: '2px solid #000',
     boxShadow: 24,
-    padding: 4,
+    padding: 16, // Aumentei o padding para mais espaço interno
+    borderRadius: "8px",
   },
+  modalConfirmButton:{
+    display: "flex"
+  },
+  modalCloseButton:{
+    backgroundColor: "red",
+    color: "white"
+  }
 };
