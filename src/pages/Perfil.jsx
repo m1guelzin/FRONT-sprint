@@ -27,7 +27,6 @@ const Perfil = () => {
 
   const navigate = useNavigate();
 
-
   const formatarData = (dataStr) => {
     const [ano, mes, dia] = dataStr.split("-");
     return `${dia}/${mes}/${ano}`;
@@ -50,7 +49,8 @@ const Perfil = () => {
         console.log("Dados do usuário retornados da API:", response.data);
         setUserData(response.data.user);
       } catch (error) {
-        console.error("Erro ao buscar usuário:", error);
+        console.log("Erro ao buscar usuário:", error);
+        console.log("Dados do usuário retornados da API:", error.response.data);
       }
     };
 
@@ -83,7 +83,7 @@ const Perfil = () => {
           margin="normal"
           label="Nome Completo do Usuário"
           value={userData.nome || ""}
-          InputProps={{ readOnly: true }}
+          slotProps={{ input: { readOnly: true } }}
         />
         <TextField
           sx={{ backgroundColor: "#D9D9D9" }}
@@ -91,7 +91,7 @@ const Perfil = () => {
           margin="normal"
           label="Email do Usuário"
           value={userData.email || ""}
-          InputProps={{ readOnly: true }}
+          slotProps={{ input: { readOnly: true } }}
         />
         <Box sx={styles.fieldsRow}>
           <TextField
@@ -101,7 +101,7 @@ const Perfil = () => {
             margin="normal"
             label="Telefone do Usuário"
             value={userData.telefone || ""}
-            InputProps={{ readOnly: true }}
+            slotProps={{ input: { readOnly: true } }}
           />
 
           <Box sx={{ marginTop: 3 }}>
@@ -113,21 +113,28 @@ const Perfil = () => {
             >
               MINHAS RESERVAS
             </Button>
-            <Menu anchorEl={anchorEl} open={open} onClose={handleCloseDropdown}
-            PaperProps={{
-                sx: {
-                  width: "410px", // ou qualquer valor que combine com o botão
-                  maxWidth: "90vw", // segurança pra responsividade
+
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleCloseDropdown}
+              slotProps={{
+                paper: {
+                  sx: {
+                    width: "410px", // ou qualquer valor que combine com o botão
+                    maxWidth: "90vw", // segurança pra responsividade
+                  },
                 },
-              }}>
+              }}
+            >
               {reservas.map((reserva, index) => (
                 <MenuItem key={index}>
                   <Box>
                     <Typography variant="body1" fontWeight="bold">
-                      {reserva.nome_da_sala}
+                      Sala: {reserva.nome_da_sala}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {formatarData(reserva.data_reserva)} às{" "}
+                      Data: {formatarData(reserva.data_reserva)} às{" "}
                       {reserva.horario_inicio}
                     </Typography>
                   </Box>
@@ -142,7 +149,7 @@ const Perfil = () => {
           margin="normal"
           label="CPF do Usuário"
           value={userData.cpf || ""}
-          InputProps={{ readOnly: true }}
+          slotProps={{ input: { readOnly: true } }}
         />
       </Box>
     </Box>
