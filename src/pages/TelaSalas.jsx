@@ -181,8 +181,9 @@ function TelaSala() {
                 }}
                 onClick={() => selecionarSala(sala)}
               >
-                <Typography variant="h6">{sala.nome_da_sala}</Typography>
+                <Typography variant="h6">Nome da Sala: {sala.nome_da_sala}</Typography>
                 <Typography variant="h6">{sala.localizacao}</Typography>
+                <Typography variant="h6">Capacidade máx: {sala.capacidade}</Typography>
               </Box>
             ))
           )}
