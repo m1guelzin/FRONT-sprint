@@ -40,7 +40,7 @@ function Login({mensagem}) {
   async function login() {
     await api.postLogin(user).then(
       (response) => {
-        alert(response.data.message);
+        if  (response.data.message);
         localStorage.setItem("authenticated", true);
         localStorage.setItem("id_usuario", response.data.user.id_usuario);
         localStorage.setItem("token", response.data.token);
