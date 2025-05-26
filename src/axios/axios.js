@@ -1,7 +1,8 @@
+// axios.js
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://10.89.240.76:3000/project-senai/api/v1/",
+  baseURL: "http://10.89.240.85:3000/project-senai/api/v1/",
   headers: { accept: "application/json" },
 });
 
@@ -14,9 +15,9 @@ const sheets = {
   criarReserva: (reservaData) => api.post("reservas/", reservaData),
   getUsuario: (id_usuario) => api.get(`user/${id_usuario}`),
   getReservasDoUsuario: (id_usuario) => api.get(`reservas/user/${id_usuario}`),
-
-  // ✅ NOVA ROTA: Atualizar usuário
-  atualizarUsuario: (formData) => api.put("user/update", formData), // PUT para atualizar o usuário autenticado =>
+  updateUser: (userData) => api.put(`user/`, userData),
+  // ✅ NOVA ROTA: Deletar Reserva
+  deleteReserva: (id_reserva) => api.delete(`reservas/${id_reserva}`), // Assumindo que sua API usa /reservas/:id_reserva
 };
 
 // Interceptador para incluir token
