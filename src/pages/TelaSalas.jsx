@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; 
 import { Box, Typography, TextField, Button, Modal } from "@mui/material";
-import api from "../axios/axios"; // Importe o seu objeto axios configurado
+import api from "../axios/axios";
 
 function TelaSala() {
   const [salasDisponiveis, setSalasDisponiveis] = useState([]);
@@ -8,10 +8,11 @@ function TelaSala() {
     {}
   );
   const [dataSelecionada, setDataSelecionada] = useState("");
-  const [salaSelecionada, setSalaSelecionada] = useState("");
-  const [horarioSelecionadoInicio, setHorarioSelecionadoInicio] =
-    useState(null);
+  const [salaSelecionada, setSalaSelecionada] = useState(null);
+  const [horariosSelecionados, setHorariosSelecionados] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
+
+  const horariosPanelRef = useRef(null);
 
   useEffect(() => {
     document.body.style.margin = "0";
@@ -27,17 +28,18 @@ function TelaSala() {
             dataSelecionada
           );
           setSalasDisponiveis(response.data.salas_disponiveis);
-          console.log("salas disponiveis", response.data.salas_disponiveis);
+          if (salaSelecionada && !response.data.salas_disponiveis.some(s => s.id_salas === salaSelecionada.id_salas)) {
+              setSalaSelecionada(null);
+          }
         } catch (error) {
           console.error("Erro ao buscar salas disponíveis:", error);
           setSalasDisponiveis([]);
         }
       } else {
         setSalasDisponiveis([]);
-        setSalaSelecionada("");
+        setSalaSelecionada(null);
       }
-
-      setHorarioSelecionadoInicio(null);
+      setHorariosSelecionados([]);
     }
 
     buscarSalasDisponiveis();
@@ -60,77 +62,114 @@ function TelaSala() {
         }
       } else {
         setHorariosDisponiveisPorSala({});
-        setHorarioSelecionadoInicio(null);
+        setHorariosSelecionados([]);
       }
     }
 
     buscarHorariosDisponiveis();
   }, [dataSelecionada]);
 
-  function handleDataChange(event) { // Atualizar o estado da data selecionada
-    setDataSelecionada(event.target.value);
-  }
-
-  function selecionarSala(sala) { // 	Definir a sala e limpar o horário anterior
-    setSalaSelecionada(sala);
-    setHorarioSelecionadoInicio(null);
-  }
-
-  function selecionarHorario(horaInicio) { // Definir o horário e abrir o modal de reserva
-    setHorarioSelecionadoInicio(horaInicio);
-    setModalAberto(true);
-  }
-
-  function handleDataChange(event) {
+  function handleDataSelectionChange(event) {
     const selectedDate = event.target.value;
     const dataAtual = new Date().toISOString().split("T")[0];
 
     if (selectedDate < dataAtual) {
-      alert("A reserva não pode estar no Passado");
+      alert("A reserva não pode ser feita para uma data no passado.");
+      setDataSelecionada("");
     } else {
       setDataSelecionada(selectedDate);
     }
   }
 
+  function selecionarSala(sala) {
+    setSalaSelecionada(sala);
+    setHorariosSelecionados([]);
+
+    if (horariosPanelRef.current) {
+      horariosPanelRef.current.scrollIntoView({
+        behavior: "smooth", // Para um scroll suave
+        block: "start",     // Alinha o topo do elemento com o topo da janela/viewport
+      });
+    }
+  }
+
+  function toggleHorario(horarioCompleto) {
+    setHorariosSelecionados((prevHorarios) => {
+      const jaSelecionado = prevHorarios.some(h => h.inicio === horarioCompleto.inicio);
+
+      if (jaSelecionado) {
+        return prevHorarios.filter((h) => h.inicio !== horarioCompleto.inicio);
+      } else {
+        return [...prevHorarios, horarioCompleto];
+      }
+    });
+  }
+
+  function handleOpenModal() {
+    if (horariosSelecionados.length > 0 && salaSelecionada && dataSelecionada) {
+      setModalAberto(true);
+    } else {
+      alert("Por favor, selecione pelo menos um horário, uma sala e uma data.");
+    }
+  }
+
   const handleFecharModal = () => {
     setModalAberto(false);
-    setHorarioSelecionadoInicio(null);
   };
 
-  const handleConfirmarReserva = async () => {
-    if (salaSelecionada && horarioSelecionadoInicio && dataSelecionada) { // Coleta tudo
-      const horarioInicioAPI = `${horarioSelecionadoInicio}:00`; // Adiciona os segundos
-      const horaFim = parseInt(horarioSelecionadoInicio.split(":")[0]) + 1;
-      const horarioFimAPI = `${horaFim < 10 ? "0" + horaFim : horaFim}:00:00`; 
-      // Adiciona os segundos e formata a hora com zero à esquerda se necessário
+  const handleConfirmarReservas = async () => {
+    if (!salaSelecionada || !dataSelecionada || horariosSelecionados.length === 0) {
+      alert("Por favor, selecione a sala, data e pelo menos um horário.");
+      return;
+    }
 
-      const userId = localStorage.getItem("id_usuario");
+    const userId = localStorage.getItem("id_usuario");
+    if (!userId) {
+        alert("ID do usuário não encontrado. Faça login novamente.");
+        return;
+    }
 
-      const reservaData = {
-        fkid_salas: salaSelecionada.id_salas,
-        data_reserva: dataSelecionada,
-        horario_inicio: horarioInicioAPI,
-        horario_fim: horarioFimAPI,
-        id_usuario: userId,
-      };
+    const reservasParaCriar = horariosSelecionados.map(horario => {
+        return {
+            fkid_salas: salaSelecionada.id_salas,
+            data_reserva: dataSelecionada,
+            horario_inicio: `${horario.inicio}:00`,
+            horario_fim: `${horario.fim}:00`,
+            id_usuario: userId,
+        };
+    });
 
-      console.log("Dados da reserva a serem enviados:", reservaData);
+    console.log("Dados das reservas a serem enviados:", reservasParaCriar);
 
+    let reservasComSucesso = 0;
+    let reservasComErro = 0;
+    let mensagensErro = [];
+
+    for (const reserva of reservasParaCriar) {
       try {
-        const response = await api.criarReserva(reservaData);
+        const response = await api.criarReserva(reserva);
         console.log("Reserva criada com sucesso:", response.data);
-        setModalAberto(false);
-        alert(response.data.message);
-        setSalaSelecionada("");
-        setHorarioSelecionadoInicio(null);
-        setDataSelecionada("");
+        reservasComSucesso++;
       } catch (error) {
         console.error("Erro ao criar reserva:", error);
-        alert(error.response.data.error);
+        reservasComErro++;
+        mensagensErro.push(`Conflito para ${reserva.horario_inicio}-${reserva.horario_fim} na sala ${salaSelecionada.nome_da_sala}: ${error.response?.data?.error || "Erro desconhecido."}`);
       }
-    } else {
-      alert("Por favor, selecione a sala, data e horário.");
     }
+
+    setModalAberto(false);
+
+    if (reservasComSucesso > 0 && reservasComErro === 0) {
+        alert(`${reservasComSucesso} reserva criada com sucesso!`);
+    } else if (reservasComSucesso > 0 && reservasComErro > 0) {
+        alert(`Algumas reservas foram criadas (${reservasComSucesso}), mas houveram erros em outras (${reservasComErro}).\n\nErros: ${mensagensErro.join("\n")}`);
+    } else {
+        alert(`Nenhuma reserva foi criada. Erros: ${mensagensErro.join("\n")}`);
+    }
+
+    setSalaSelecionada(null);
+    setHorariosSelecionados([]);
+    setDataSelecionada("");
   };
 
   const horariosDisponiveisParaEstaSala = salaSelecionada
@@ -152,11 +191,9 @@ function TelaSala() {
               type="date"
               variant="outlined"
               value={dataSelecionada}
-              onChange={handleDataChange}
+              onChange={handleDataSelectionChange}
               sx={styles.dateInput}
-              slotProps={{
-                inputLabel: { shrink: true },
-              }}
+              InputLabelProps={{ shrink: true }}
             />
           </Box>
           {dataSelecionada === "" ? (
@@ -175,7 +212,7 @@ function TelaSala() {
                   ...styles.salaCard,
                   backgroundColor:
                     salaSelecionada?.id_salas === sala.id_salas
-                      ? "#90caf9" //azul p/ selecionado
+                      ? "#90caf9"
                       : "#eee",
                   cursor: "pointer",
                 }}
@@ -188,9 +225,7 @@ function TelaSala() {
             ))
           )}
         </Box>
-
-        {/* Painel Direito: Horários Disponíveis */}
-        <Box sx={styles.rightPanel}>
+        <Box sx={styles.rightPanel} ref={horariosPanelRef}>
           <Typography variant="h4" color="black" mb={2}>
             HORÁRIOS DISPONÍVEIS
           </Typography>
@@ -201,28 +236,37 @@ function TelaSala() {
                 <strong>{salaSelecionada.nome_da_sala}</strong>
               </Typography>
               <Box sx={styles.horariosGrid}>
-                {horariosDisponiveisParaEstaSala.map((horario) => (
-                  <Button
-                    key={`${salaSelecionada.id_salas}-${horario.inicio}`}
-                    sx={{
-                      ...styles.horarioButton,
-                      backgroundColor:
-                        horarioSelecionadoInicio === horario.inicio
-                          ? "#64b5f6" //azul p/ selecionado
-                          : "#ccc", //cinza
-                    }}
-                    onClick={() => selecionarHorario(horario.inicio)}
-                  >
-                    {horario.inicio} - {horario.fim}
-                  </Button>
-                ))}
-                {horariosDisponiveisParaEstaSala.length === 0 && (
+                {horariosDisponiveisParaEstaSala.length === 0 ? (
                   <Typography color="black">
                     Não há horários disponíveis para esta sala na data
                     selecionada.
                   </Typography>
+                ) : (
+                  horariosDisponiveisParaEstaSala.map((horario) => (
+                    <Button
+                      key={`${salaSelecionada.id_salas}-${horario.inicio}`}
+                      sx={{
+                        ...styles.horarioButton,
+                        backgroundColor: horariosSelecionados.some(h => h.inicio === horario.inicio)
+                          ? "#64b5f6"
+                          : "#ccc",
+                      }}
+                      onClick={() => toggleHorario(horario)}
+                    >
+                      {horario.inicio} - {horario.fim}
+                    </Button>
+                  ))
                 )}
               </Box>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleOpenModal}
+                sx={{ mt: 3, p: 2 }}
+                disabled={horariosSelecionados.length === 0}
+              >
+                Reservar Horários Selecionados
+              </Button>
             </>
           ) : (
             <Typography color="black">
@@ -249,7 +293,7 @@ function TelaSala() {
           >
             ESPECIFICAÇÕES GERAIS DA SALA
           </Typography>
-          {salaSelecionada && horarioSelecionadoInicio && dataSelecionada && (
+          {salaSelecionada && dataSelecionada && (
             <>
               <Typography
                 id="modal-modal-description"
@@ -296,7 +340,12 @@ function TelaSala() {
                 fontSize={20}
                 sx={{ mt: 0 }}
               >
-                Horário de Início: <strong>{horarioSelecionadoInicio}</strong>
+                Horários Selecionados:{" "}
+                <strong>
+                  {horariosSelecionados.length > 0
+                    ? horariosSelecionados.map(h => `${h.inicio}-${h.fim}`).join(", ")
+                    : "Nenhum horário selecionado"}
+                </strong>
               </Typography>
             </>
           )}
@@ -317,11 +366,11 @@ function TelaSala() {
             </Button>
             <Button
               sx={styles.modalConfirmButton}
-              onClick={handleConfirmarReserva}
+              onClick={handleConfirmarReservas}
               variant="contained"
               color="success"
             >
-              Confirmar Reserva
+              Confirmar Reservas
             </Button>
           </Box>
         </Box>
@@ -332,22 +381,21 @@ function TelaSala() {
 
 export default TelaSala;
 
-// ---------------------------
-
+// --- Estilos CSS (mantidos os relevantes) ---
 const styles = {
   container: {
-    backgroundColor: "red", // Cor de fundo vermelha do protótipo
+    backgroundColor: "red",
     minHeight: "100vh",
     padding: "20px",
     width: "100vw",
     display: "flex",
     flexDirection: "column",
-    alignItems: "center", // Centralizar conteúdo horizontalmente
+    alignItems: "center",
   },
   boxWrapper: {
     display: "flex",
     gap: "20px",
-    maxWidth: "1800px", // Largura máxima para evitar que os painéis fiquem muito largos
+    maxWidth: "1800px",
     width: "100%",
   },
   leftPanel: {
@@ -355,15 +403,14 @@ const styles = {
     borderRadius: "8px",
     padding: "15px",
     display: "flex",
-    flexDirection: "column", // Organizar título, seletor de data e lista de salas verticalmente
+    flexDirection: "column",
   },
   leftPanelTop: {
-    // Novo estilo para agrupar título e seletor de data
     display: "flex",
-    justifyContent: "space-between", // Espaçar os elementos horizontalmente
-    alignItems: "center", // Alinhar verticalmente ao centro
-    marginBottom: "15px", // Espaço abaixo desta linha
-    width: "100%", // Ocupar toda a largura do painel esquerdo
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "15px",
+    width: "100%",
   },
   dateInput: {
     width: "25%",
@@ -371,9 +418,8 @@ const styles = {
     backgroundColor: "white",
     borderRadius: "5px",
     padding: "10px",
-    boxSizing: "border-box", // Ajustar a largura para o conteúdo
+    boxSizing: "border-box",
   },
-  // ... restante dos seus estilos ...
   rightPanel: {
     flex: 1,
     backgroundColor: "#f5f5f5",
@@ -381,7 +427,7 @@ const styles = {
     padding: "15px",
     display: "flex",
     flexDirection: "column",
-    alignItems: "center", // Centralizar os botões de horário
+    alignItems: "center",
   },
   title: {
     backgroundColor: "white",
@@ -391,13 +437,13 @@ const styles = {
     textAlign: "center",
   },
   salaCard: {
-    backgroundColor: "#dcdcdc", // Tom de cinza mais escuro para os cards de sala
+    backgroundColor: "#dcdcdc",
     padding: "12px",
     borderRadius: "6px",
     marginBottom: "8px",
     cursor: "pointer",
     "&:hover": {
-      backgroundColor: "#c0c0c0", // Feedback visual ao passar o mouse
+      backgroundColor: "#c0c0c0",
     },
   },
   horariosGrid: {
@@ -428,7 +474,7 @@ const styles = {
     backgroundColor: "white",
     border: "2px solid #000",
     boxShadow: 24,
-    padding: 16, // Aumentei o padding para mais espaço interno
+    padding: 6,
     borderRadius: "8px",
   },
   modalConfirmButton: {

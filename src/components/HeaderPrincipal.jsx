@@ -85,7 +85,7 @@ function getStyles() {
         padding: "8px 20px",
         "&:hover": {
           border: "none",
-          backgroundColor: "rgba(255, 0, 0, 0.55)",
+          backgroundColor: "rgba(136, 119, 119, 0.7)",
         },
       },
     },
@@ -101,7 +101,7 @@ function getStyles() {
         padding: "8px 20px",
         "&:hover": {
           border: "none",
-          backgroundColor: "rgba(85, 85, 85, 0.7)",
+          backgroundColor: "rgba(136, 119, 119, 0.7)",
         },
       },
     },

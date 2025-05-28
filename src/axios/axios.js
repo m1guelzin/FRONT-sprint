@@ -16,8 +16,7 @@ const sheets = {
   getUsuario: (id_usuario) => api.get(`user/${id_usuario}`),
   getReservasDoUsuario: (id_usuario) => api.get(`reservas/user/${id_usuario}`),
   updateUser: (userData) => api.put(`user/`, userData),
-  // ✅ NOVA ROTA: Deletar Reserva
-  deleteReserva: (id_reserva) => api.delete(`reservas/${id_reserva}`), // Assumindo que sua API usa /reservas/:id_reserva
+  deleteReserva: (id_reserva) => api.delete(`reservas/${id_reserva}`), 
 };
 
 // Interceptador para incluir token
