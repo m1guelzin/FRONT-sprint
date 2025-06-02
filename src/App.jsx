@@ -1,8 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Footer from "./components/Footer";
 import DefaultLayout from "./components/DefaultLayout";
-import Header from "./components/Header";
 
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
