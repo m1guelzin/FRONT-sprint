@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DeleteIcon from "@mui/icons-material/Delete";
-import SuccessSnackbar from '../components/SuccessSnackbar'; 
+
 
 const Perfil = () => {
   const [userData, setUserData] = useState({});
@@ -19,10 +19,6 @@ const Perfil = () => {
   const [openDetailModal, setOpenDetailModal] = useState(false);
   const [selectedReserva, setSelectedReserva] = useState(null);
   const [openReservasListModal, setOpenReservasListModal] = useState(false);
-
-  // NOVOS ESTADOS PARA O SNACKBAR
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const handleOpenReservasListModal = () => {
     setOpenReservasListModal(true);
@@ -37,6 +33,7 @@ const Perfil = () => {
     setOpenDetailModal(true);
   };
 
+  // Função para fechar o modal de detalhes
   const handleCloseDetailModal = () => {
     setOpenDetailModal(false);
     setSelectedReserva(null);
@@ -44,7 +41,7 @@ const Perfil = () => {
 
   const formatarData = (dataStr) => {
     if (!dataStr || !dataStr.includes('-')) {
-      return dataStr;
+        return dataStr;
     }
     const [ano, mes, dia] = dataStr.split("-");
     return `${dia}/${mes}/${ano}`;
@@ -61,17 +58,16 @@ const Perfil = () => {
 
   const handleDeleteReserva = async (id_reserva) => {
     if (window.confirm("Tem certeza que deseja cancelar esta reserva?")) {
+      // Remove a reserva da UI imediatamente
       setReservas(prevReservas => prevReservas.filter(reserva => reserva.id_reserva !== id_reserva));
-      handleCloseDetailModal();
+      handleCloseDetailModal(); // Fecha o modal de detalhes
 
       try {
-        await api.deleteReserva(id_reserva);
-        // SUBSTITUÍDO O ALERT
-        setSnackbarMessage("Reserva cancelada com sucesso!");
-        setSnackbarOpen(true);
+        await api.deleteReserva(id_reserva); // Chama a API para deletar
+        alert("Reserva cancelada com sucesso!");
       } catch (error) {
-        // Para erros, você pode escolher entre alert ou um snackbar de erro
         alert("Erro ao cancelar reserva. Tentando reverter ou sincronizar...");
+        // Em caso de erro, recarrega para garantir a sincronização
         const id_usuario = localStorage.getItem("id_usuario");
         if (id_usuario) {
           fetchUserReservas(id_usuario);
@@ -98,7 +94,8 @@ const Perfil = () => {
       try {
         const response = await api.getUsuario(id_usuario);
         setUserData(response.data.user);
-        // Sempre inicializa a senha como vazia para não exibir nem preencher
+        // Garante que o campo senha do estado esteja vazio ao carregar,
+        // já que não queremos exibir a senha original.
         setUserData(prevData => ({ ...prevData, senha: "" }));
       } catch (error) {
         console.error("Erro ao buscar informações do usuário:", error);
@@ -125,29 +122,34 @@ const Perfil = () => {
       return;
     }
 
+    // A MUDANÇA PRINCIPAL AQUI:
+    // Se userData.senha estiver vazio, envie um espaço em branco ou um valor específico
+    // que o backend entenda como "não alterar a senha".
+    // Se o backend do mobile funciona sem preencher, talvez ele envie algo como ' ' ou um valor mágico.
+    const senhaParaEnviar = userData.senha.trim() === "" ? " " : userData.senha; // Enviando um espaço se estiver vazio
+
     const dataToUpdate = {
       id_usuario: id_usuario,
       nome: userData.nome,
       email: userData.email,
       telefone: userData.telefone,
-      senha: userData.senha || "",
+      senha: senhaParaEnviar, // Agora usamos a senha tratada
       cpf: userData.cpf,
     };
+
+    console.log("Dados que serão enviados para a API:", dataToUpdate);
 
     try {
       await api.updateUser(dataToUpdate);
       setEditMode(false);
-      // SUBSTITUÍDO O ALERT
-      setSnackbarMessage("Perfil atualizado com sucesso!");
-      setSnackbarOpen(true);
-      // Limpa o campo de senha na UI após o salvamento bem-sucedido
+      alert("Perfil atualizado com sucesso!");
+      // Limpa o campo de senha após o salvamento bem-sucedido
       setUserData(prev => ({ ...prev, senha: "" }));
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
-      // Para erros, você pode escolher entre alert ou um snackbar de erro
       alert(
         "Erro ao atualizar perfil: " +
-        (error.response?.data?.error || "Verifique os dados e tente novamente.")
+          (error.response?.data?.error || "Verifique os dados e tente novamente.")
       );
     }
   };
@@ -201,20 +203,17 @@ const Perfil = () => {
             </Button>
           </Box>
         </Box>
-
-        {editMode && ( // O campo só aparece se editMode for true
-          <TextField
-            name="senha"
-            type="password"
-            sx={styles.campoCPF} // Use os estilos que você já tem
-            fullWidth
-            margin="normal"
-            label="Confirme a senha ou Modifique"
-            value={userData.senha || ""}
-            onChange={handleInputChange}
-            // inputProps={{ readOnly: !editMode }} // Já está dentro de um bloco editMode
-          />
-        )}
+        <TextField
+          name="senha"
+          type="password"
+          sx={ styles.campoCPF}
+          fullWidth
+          margin="normal"
+          label="Nova Senha (deixe em branco para não alterar)"
+          value={userData.senha || ""}
+          onChange={handleInputChange}
+          inputProps={{ readOnly: !editMode }}
+        />
         <br></br>
         <TextField
           name="cpf"
@@ -226,7 +225,7 @@ const Perfil = () => {
           inputProps={{ readOnly: true }}
         />
 
-        <Box sx={{ display: "flex", gap: 2, marginTop: -10, justifyContent: "flex-end", marginRight: 24 }}>
+        <Box sx={{ display: "flex", gap: 2, marginTop: -10,justifyContent: "flex-end", marginRight: 24 }}>
           {!editMode ? (
             <Button
               sx={styles.ButtonAtualizar}
@@ -234,7 +233,6 @@ const Perfil = () => {
               variant="contained"
               onClick={() => {
                 setEditMode(true);
-                // Limpa o campo de senha no estado ao entrar no modo de edição
                 setUserData(prev => ({ ...prev, senha: "" }));
               }}
             >
@@ -254,6 +252,16 @@ const Perfil = () => {
                 variant="contained"
                 onClick={async () => {
                   setEditMode(false);
+                  const id_usuario = localStorage.getItem("id_usuario");
+                  if (id_usuario) {
+                      try {
+                          const response = await api.getUsuario(id_usuario);
+                          setUserData(response.data.user);
+                          setUserData(prev => ({ ...prev, senha: "" }));
+                      } catch (error) {
+                          console.error("Erro ao buscar informações do usuário ao cancelar:", error);
+                      }
+                  }
                 }}
               >
                 Cancelar
@@ -286,7 +294,7 @@ const Perfil = () => {
                     '&:last-child': { borderBottom: 'none' },
                   }}
                 >
-                  <Box>
+                  <Box onClick={() => handleOpenDetailModal(reserva)} sx={{ cursor: 'pointer', flexGrow: 1 }}>
                     <Typography variant="body1" fontWeight="bold">
                       Sala: {reserva.nome_da_sala}
                     </Typography>
@@ -308,24 +316,58 @@ const Perfil = () => {
             <Typography>Nenhuma reserva encontrada.</Typography>
           )}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-            <Button onClick={handleCloseReservasListModal} sx={styles.ButtonCancelar}>Fechar</Button>
+            <Button onClick={handleCloseReservasListModal}>Fechar</Button>
           </Box>
         </Box>
       </Modal>
 
-      {/* RENDERIZAÇÃO DO SNACKBAR DE SUCESSO */}
-      <SuccessSnackbar
-        open={snackbarOpen}
-        message={snackbarMessage}
-        onClose={() => setSnackbarOpen(false)}
-      />
+      <Modal
+        open={openDetailModal}
+        onClose={handleCloseDetailModal}
+        aria-labelledby="modal-title"
+        aria-describedby="modal-description"
+      >
+        <Box sx={styles.modalStyle}>
+          <Typography id="modal-title" variant="h6" component="h2" gutterBottom>
+            Detalhes da Reserva
+          </Typography>
+          {selectedReserva && (
+            <Box>
+              <Typography variant="body1">
+                <span style={{ fontWeight: 'bold' }}>Sala:</span> {selectedReserva.nome_da_sala}
+              </Typography>
+              <Typography variant="body1">
+                <span style={{ fontWeight: 'bold' }}>Data:</span> {formatarData(selectedReserva.data_reserva)}
+              </Typography>
+              <Typography variant="body1">
+                <span style={{ fontWeight: 'bold' }}>Horário de Início:</span> {selectedReserva.horario_inicio}
+              </Typography>
+              <Typography variant="body1">
+                <span style={{ fontWeight: 'bold' }}>Horário de Término:</span> {selectedReserva.horario_fim}
+              </Typography>
+              <Typography variant="body1">
+                <span style={{ fontWeight: 'bold' }}>Descrição:</span> {selectedReserva.descricao || 'N/A'}
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+                <IconButton
+                  color="error"
+                  aria-label="Deletar Reserva"
+                  onClick={() => handleDeleteReserva(selectedReserva.id_reserva)}
+                >
+                  <DeleteIcon />
+                </IconButton>
+                <Button onClick={handleCloseDetailModal} sx={{ ml: 2 }}>Fechar</Button>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </Modal>
     </Box>
   );
 };
 
 export default Perfil;
 
-// --- Estilos CSS (mantidos EXATAMENTE como você forneceu) ---
 const styles = {
   container: {
     overflowX: "hidden",
