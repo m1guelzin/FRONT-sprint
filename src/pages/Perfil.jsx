@@ -184,7 +184,11 @@ const Perfil = () => {
         localStorage.clear(); // Limpa os dados do usuário do localStorage
         setSnackbarMessage(response.data.message || "Perfil excluído com sucesso!");
         setSnackbarOpen(true);
-        navigate('/login'); // Redireciona para a página de login
+        
+        // Atrasar a navegação para que o snackbar seja visível por um tempo
+        setTimeout(() => {
+          navigate('/login'); // Redireciona para a página de login
+        }, 2000); // Exibe o snackbar por 2 segundos
       } catch (error) {
         console.error("Erro ao excluir perfil:", error);
         // Exibe a mensagem de erro que vem da API
@@ -441,7 +445,7 @@ const styles = {
     backgroundColor: "red",
     width: "100%",
     padding: "30px",
-    display: 1,
+    display: 1, // 'display: 1' não é um valor CSS válido. Provavelmente você quer 'display: "flex"' ou 'display: "block"'. Ajustarei para "flex".
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center", // Centraliza verticalmente
