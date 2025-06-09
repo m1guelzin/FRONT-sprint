@@ -8,10 +8,15 @@ import { useState } from "react";
 import api from "../axios/axios";
 import { Link , useNavigate} from "react-router-dom";
 import { useEffect } from "react";
+import SuccessSnackbar from '../components/SuccessSnackbar'; // Importe o SuccessSnackbar
 
 function Cadastro() {
   const styles = getStyles();
   const navigate = useNavigate();
+
+  // NOVOS ESTADOS PARA O SNACKBAR
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   useEffect(() => {
     document.body.style.margin = "0";
@@ -40,112 +45,127 @@ function Cadastro() {
   async function cadastro() {
     await api.postCadastro(user).then(
       (response) => {
-        alert(response.data.message);
-        localStorage.setItem("authenticated", true);
-        navigate("/login");
+        // Usa o snackbar para exibir a mensagem de sucesso da API ou padrão
+        setSnackbarMessage(response.data.message || "Usuário criado com sucesso!");
+        setSnackbarOpen(true);
+        
+        // Atrasar a navegação para que o snackbar seja visível por um tempo
+        setTimeout(() => {
+          // Não define localStorage.setItem("authenticated", true); aqui
+          // pois o usuário ainda precisará fazer login.
+          navigate("/login");
+        }, 500); // Exibe o snackbar por 2 segundos
       },
       (error) => {
         console.log(error);
-        alert(error.response.data.error);
+        // Usa o snackbar para exibir a mensagem de erro da API
+        setSnackbarMessage(error.response?.data?.error || "Erro ao criar usuário. Tente novamente.");
+        setSnackbarOpen(true);
       }
     );
   }
 
   return (
-      <Box sx={styles.body}>
-        <Box sx={styles.centerBox}>
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/SENAI_S%C3%A3o_Paulo_logo.png/1200px-SENAI_S%C3%A3o_Paulo_logo.png"
-            alt="Logo"
-            style={styles.logo}
-          />
+    <Box sx={styles.body}>
+      <Box sx={styles.centerBox}>
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/SENAI_S%C3%A3o_Paulo_logo.png/1200px-SENAI_S%C3%A3o_Paulo_logo.png"
+          alt="Logo"
+          style={styles.logo}
+        />
+        <Box
+          component="form"
+          sx={{ marginTop: 1 }}
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <Box
-            component="form"
-            sx={{ marginTop: 1 }}
-            onSubmit={handleSubmit}
-            noValidate
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              flexDirection: "column",
+            }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                flexDirection: "column",
-              }}
+            <TextFields
+              required
+              fullWidth
+              id="nome"
+              label="Nome"
+              name="nome"
+              sx={styles.input}
+              value={user.nome}
+              onChange={onChange}
+            />
+            <TextFields
+              required
+              fullWidth
+              id="cpf"
+              label="Cpf"
+              name="cpf"
+              type="number"
+              sx={styles.input}
+              value={user.cpf}
+              onChange={onChange}
+            />
+            <TextFields
+              required
+              fullWidth
+              id="telefone"
+              label="Telefone"
+              name="telefone"
+              type="number"
+              sx={styles.input}
+              value={user.telefone}
+              onChange={onChange}
+            />
+
+            <TextFields
+              required
+              fullWidth
+              id="email"
+              label="Email"
+              name="email"
+              sx={styles.input}
+              value={user.email}
+              onChange={onChange}
+            />
+
+            <TextFields
+              required
+              fullWidth
+              id="senha"
+              label="Senha"
+              name="senha"
+              type="password"
+              sx={styles.input}
+              value={user.senha}
+              onChange={onChange}
+            />
+          </Box>
+          <Box sx={{display:"flex", justifyContent:'center'}}>
+            <Typography sx={styles.centerText}>Já tem um Login?</Typography>
+            <Typography component={Link} to={"/login"} sx={styles.centerTextClick}>Clique aqui!</Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={styles.buttonToCadastro}
             >
-              <TextFields
-                required
-                fullWidth
-                id="nome"
-                label="Nome"
-                name="nome"
-                sx={styles.input}
-                value={user.nome}
-                onChange={onChange}
-              />
-              <TextFields
-                required
-                fullWidth
-                id="cpf"
-                label="Cpf"
-                name="cpf"
-                type="number"
-                sx={styles.input}
-                value={user.cpf}
-                onChange={onChange}
-              />
-              <TextFields
-                required
-                fullWidth
-                id="telefone"
-                label="Telefone"
-                name="telefone"
-                type="number"
-                sx={styles.input}
-                value={user.telefone}
-                onChange={onChange}
-              />
-
-              <TextFields
-                required
-                fullWidth
-                id="email"
-                label="Email"
-                name="email"
-                sx={styles.input}
-                value={user.email}
-                onChange={onChange}
-              />
-
-              <TextFields
-                required
-                fullWidth
-                id="senha"
-                label="Senha"
-                name="senha"
-                type="password"
-                sx={styles.input}
-                value={user.senha}
-                onChange={onChange}
-              />
-            </Box>
-            <Box sx={{display:"flex", justifyContent:'center'}}>
-              <Typography sx={styles.centerText}>Já tem um Login?</Typography>
-              <Typography component={Link} to={"/login"} sx={styles.centerTextClick}>Clique aqui!</Typography>
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={styles.buttonToCadastro}
-              >
-                Entrar
-              </Button>
-            </Box>
+              Entrar
+            </Button>
           </Box>
         </Box>
       </Box>
 
+      {/* Renderização do SuccessSnackbar */}
+      <SuccessSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={() => setSnackbarOpen(false)}
+      />
+    </Box>
   );
 }
 export default Cadastro;

@@ -8,11 +8,16 @@ import { useState } from "react";
 import api from "../axios/axios";
 import { useEffect } from "react";
 import { Link , useNavigate} from "react-router-dom";
+import SuccessSnackbar from '../components/SuccessSnackbar'; // Importe o SuccessSnackbar
 
 function Login({mensagem}) {
   const styles = getStyles();
 
   const navigate = useNavigate();
+
+  // NOVOS ESTADOS PARA O SNACKBAR
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   useEffect(() => {
     console.log({mensagem})
@@ -34,87 +39,101 @@ function Login({mensagem}) {
   const handleSubmit = (event) => {
     event.preventDefault();
     login();
-    // alert("Email:"+user.email+" "+"Senha:"+user.password)
   };
 
   async function login() {
     await api.postLogin(user).then(
       (response) => {
-        if  (response.data.message);
+        // Assegura que a mensagem de sucesso do backend, se houver, seja exibida
+        // ou usa uma mensagem padrão "Login bem-sucedido"
+        setSnackbarMessage(response.data.message || "Login bem-sucedido!");
+        setSnackbarOpen(true);
+
         localStorage.setItem("authenticated", true);
         localStorage.setItem("id_usuario", response.data.user.id_usuario);
         localStorage.setItem("token", response.data.token);
         console.log("Token do usuario: ", response.data.token);
-        navigate("/inicial");
+        
+        // Atrasar a navegação para que o snackbar seja visível por um tempo
+        setTimeout(() => {
+          navigate("/inicial");
+        }, 500); // Exibe o snackbar por 2 segundos
       },
       (error) => {
         console.log(error);
-        alert(error.response.data.error);
+        // Usa o snackbar para exibir a mensagem de erro da API
+        setSnackbarMessage(error.response?.data?.error || "Erro ao fazer login. Tente novamente.");
+        setSnackbarOpen(true);
       }
     );
   }
 
   return (
-      <Box sx={styles.body}>
-        <Box sx={styles.centerBox}>
-          {/* <Avatar sx={{ margin: 1, backgroundColor: "red" }}>
-          </Avatar> */}
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/SENAI_S%C3%A3o_Paulo_logo.png/1200px-SENAI_S%C3%A3o_Paulo_logo.png"
-            alt="Logo"
-            style={styles.logo}
+    <Box sx={styles.body}>
+      <Box sx={styles.centerBox}>
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/SENAI_S%C3%A3o_Paulo_logo.png/1200px-SENAI_S%C3%A3o_Paulo_logo.png"
+          alt="Logo"
+          style={styles.logo}
+        />
+        <Box
+          component="form"
+          sx={{ marginTop: 1 }}
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <TextFields
+            required
+            fullWidth
+            id="cpf"
+            label="Cpf"
+            name="cpf"
+            margin="normal"
+            sx={{ mt: "50px", background: "#D9D9D9" }}
+            value={user.cpf}
+            onChange={onChange}
           />
-          <Box
-            component="form"
-            sx={{ marginTop: 1 }}
-            onSubmit={handleSubmit}
-            noValidate
-          >
-            <TextFields
-              required
-              fullWidth
-              id="cpf"
-              label="Cpf"
-              name="cpf"
-              margin="normal"
-              sx={{ mt: "50px", background: "#D9D9D9" }}
-              value={user.cpf}
-              onChange={onChange}
-            />
-            <TextFields
-              required
-              fullWidth
-              id="senha"
-              label="Senha"
-              name="senha"
-              margin="normal"
-              type="password"
-              sx={{ mb: "15px", background: "#D9D9D9" }}
-              value={user.senha}
-              onChange={onChange}
-            />
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
-              <Typography sx={styles.centerText}>Não tem conta?</Typography>
-              <Typography
-                component={Link}
-                to={"/user"}
-                sx={styles.centerTextClick}
-              >
-                Cadastra-se!
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
-              <Button
-                type="submit"
-                variant="contained"
-                sx={styles.buttonToCadastro}
-              >
-                Entrar
-              </Button>
-            </Box>
+          <TextFields
+            required
+            fullWidth
+            id="senha"
+            label="Senha"
+            name="senha"
+            margin="normal"
+            type="password"
+            sx={{ mb: "15px", background: "#D9D9D9" }}
+            value={user.senha}
+            onChange={onChange}
+          />
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <Typography sx={styles.centerText}>Não tem conta?</Typography>
+            <Typography
+              component={Link}
+              to={"/user"}
+              sx={styles.centerTextClick}
+            >
+              Cadastra-se!
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={styles.buttonToCadastro}
+            >
+              Entrar
+            </Button>
           </Box>
         </Box>
       </Box>
+
+      {/* Renderização do SuccessSnackbar */}
+      <SuccessSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={() => setSnackbarOpen(false)}
+      />
+    </Box>
   );
 }
 export default Login;

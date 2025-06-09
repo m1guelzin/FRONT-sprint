@@ -10,7 +10,8 @@ import {
 } from "@mui/material";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DeleteIcon from "@mui/icons-material/Delete";
-
+import SuccessSnackbar from '../components/SuccessSnackbar'; // Verifique se este caminho está correto
+import { useNavigate } from 'react-router-dom'; // Importe useNavigate para redirecionamento
 
 const Perfil = () => {
   const [userData, setUserData] = useState({});
@@ -19,6 +20,12 @@ const Perfil = () => {
   const [openDetailModal, setOpenDetailModal] = useState(false);
   const [selectedReserva, setSelectedReserva] = useState(null);
   const [openReservasListModal, setOpenReservasListModal] = useState(false);
+
+  // ESTADOS PARA O SNACKBAR
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+
+  const navigate = useNavigate(); // Inicialize o hook useNavigate
 
   const handleOpenReservasListModal = () => {
     setOpenReservasListModal(true);
@@ -33,7 +40,6 @@ const Perfil = () => {
     setOpenDetailModal(true);
   };
 
-  // Função para fechar o modal de detalhes
   const handleCloseDetailModal = () => {
     setOpenDetailModal(false);
     setSelectedReserva(null);
@@ -53,21 +59,25 @@ const Perfil = () => {
       setReservas(response.data.reservas);
     } catch (error) {
       console.error("Erro ao buscar reservas do usuário:", error);
+      setReservas([]); // Em caso de erro, trate como se não houvesse reservas
     }
   };
 
   const handleDeleteReserva = async (id_reserva) => {
     if (window.confirm("Tem certeza que deseja cancelar esta reserva?")) {
-      // Remove a reserva da UI imediatamente
       setReservas(prevReservas => prevReservas.filter(reserva => reserva.id_reserva !== id_reserva));
       handleCloseDetailModal(); // Fecha o modal de detalhes
 
       try {
         await api.deleteReserva(id_reserva); // Chama a API para deletar
-        alert("Reserva cancelada com sucesso!");
+        setSnackbarMessage("Reserva cancelada com sucesso!");
+        setSnackbarOpen(true);
+        const id_usuario = localStorage.getItem("id_usuario");
+        if (id_usuario) {
+          fetchUserReservas(id_usuario); // Re-busque as reservas para atualizar
+        }
       } catch (error) {
         alert("Erro ao cancelar reserva. Tentando reverter ou sincronizar...");
-        // Em caso de erro, recarrega para garantir a sincronização
         const id_usuario = localStorage.getItem("id_usuario");
         if (id_usuario) {
           fetchUserReservas(id_usuario);
@@ -94,9 +104,11 @@ const Perfil = () => {
       try {
         const response = await api.getUsuario(id_usuario);
         setUserData(response.data.user);
-        // Garante que o campo senha do estado esteja vazio ao carregar,
-        // já que não queremos exibir a senha original.
-        setUserData(prevData => ({ ...prevData, senha: "" }));
+        setUserData(prevData => ({
+          ...prevData,
+          senha: "",
+          senhaarmazenada: response.data.user.senha
+        }));
       } catch (error) {
         console.error("Erro ao buscar informações do usuário:", error);
       }
@@ -118,22 +130,19 @@ const Perfil = () => {
     const id_usuario = parseInt(id_usuario_str, 10);
 
     if (isNaN(id_usuario)) {
-      alert("ID do usuário inválido. Faça login novamente.");
+      setSnackbarMessage("ID do usuário inválido. Faça login novamente.");
+      setSnackbarOpen(true);
       return;
     }
 
-    // A MUDANÇA PRINCIPAL AQUI:
-    // Se userData.senha estiver vazio, envie um espaço em branco ou um valor específico
-    // que o backend entenda como "não alterar a senha".
-    // Se o backend do mobile funciona sem preencher, talvez ele envie algo como ' ' ou um valor mágico.
-    const senhaParaEnviar = userData.senha.trim() === "" ? " " : userData.senha; // Enviando um espaço se estiver vazio
+    const senhaParaEnviar = userData.senha.trim() !== "" ? userData.senha : userData.senhaarmazenada;
 
     const dataToUpdate = {
       id_usuario: id_usuario,
       nome: userData.nome,
       email: userData.email,
       telefone: userData.telefone,
-      senha: senhaParaEnviar, // Agora usamos a senha tratada
+      senha: senhaParaEnviar,
       cpf: userData.cpf,
     };
 
@@ -142,15 +151,46 @@ const Perfil = () => {
     try {
       await api.updateUser(dataToUpdate);
       setEditMode(false);
-      alert("Perfil atualizado com sucesso!");
-      // Limpa o campo de senha após o salvamento bem-sucedido
+      setSnackbarMessage("Perfil atualizado com sucesso!");
+      setSnackbarOpen(true);
       setUserData(prev => ({ ...prev, senha: "" }));
+      const updatedUserData = await api.getUsuario(id_usuario);
+      setUserData(prevData => ({
+        ...prevData,
+        senhaarmazenada: updatedUserData.data.user.senha
+      }));
+
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
-      alert(
+      setSnackbarMessage(
         "Erro ao atualizar perfil: " +
-          (error.response?.data?.error || "Verifique os dados e tente novamente.")
+        (error.response?.data?.error || "Verifique os dados e tente novamente.")
       );
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleDeleteProfile = async () => {
+    if (window.confirm("Tem certeza que deseja excluir seu perfil? Esta ação é irreversível.")) {
+      const id_usuario = localStorage.getItem("id_usuario");
+      if (!id_usuario) {
+        setSnackbarMessage("ID do usuário não encontrado. Não foi possível excluir o perfil.");
+        setSnackbarOpen(true);
+        return;
+      }
+
+      try {
+        const response = await api.deleteUsuario(id_usuario); // Chame a API
+        localStorage.clear(); // Limpa os dados do usuário do localStorage
+        setSnackbarMessage(response.data.message || "Perfil excluído com sucesso!");
+        setSnackbarOpen(true);
+        navigate('/login'); // Redireciona para a página de login
+      } catch (error) {
+        console.error("Erro ao excluir perfil:", error);
+        // Exibe a mensagem de erro que vem da API
+        setSnackbarMessage(error.response?.data?.error || "Erro ao excluir perfil. Tente novamente.");
+        setSnackbarOpen(true);
+      }
     }
   };
 
@@ -192,6 +232,7 @@ const Perfil = () => {
             onChange={handleInputChange}
             inputProps={{ readOnly: !editMode }}
           />
+          {/* Botão MINHAS RESERVAS */}
           <Box sx={{ marginTop: 3 }}>
             <Button
               variant="contained"
@@ -225,7 +266,8 @@ const Perfil = () => {
           inputProps={{ readOnly: true }}
         />
 
-        <Box sx={{ display: "flex", gap: 2, marginTop: -10,justifyContent: "flex-end", marginRight: 24 }}>
+        {/* Botão ATUALIZAR PERFIL / Salvar / Cancelar */}
+        <Box sx={{ display: "flex", gap: 2, marginTop: -10, justifyContent: "flex-end", marginRight: 24 }}>
           {!editMode ? (
             <Button
               sx={styles.ButtonAtualizar}
@@ -269,8 +311,22 @@ const Perfil = () => {
             </>
           )}
         </Box>
+
+        {/* Botão EXCLUIR PERFIL - Abaixo dos outros botões, com alinhamento à direita */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2, marginRight: 24 }}>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteProfile}
+            sx={styles.ButtonExcluirPerfil}
+          >
+            Excluir Perfil
+          </Button>
+        </Box>
+
       </Box>
 
+      {/* Modal de Lista de Reservas */}
       <Modal
         open={openReservasListModal}
         onClose={handleCloseReservasListModal}
@@ -316,11 +372,12 @@ const Perfil = () => {
             <Typography>Nenhuma reserva encontrada.</Typography>
           )}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-            <Button onClick={handleCloseReservasListModal}>Fechar</Button>
+            <Button onClick={handleCloseReservasListModal} sx={styles.ButtonCancelar}>Fechar</Button>
           </Box>
         </Box>
       </Modal>
 
+      {/* Modal de Detalhes da Reserva */}
       <Modal
         open={openDetailModal}
         onClose={handleCloseDetailModal}
@@ -362,6 +419,13 @@ const Perfil = () => {
           )}
         </Box>
       </Modal>
+
+      {/* RENDERIZAÇÃO DO SNACKBAR DE SUCESSO */}
+      <SuccessSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={() => setSnackbarOpen(false)}
+      />
     </Box>
   );
 };
@@ -458,5 +522,14 @@ const styles = {
   ButtonCancelar: {
     backgroundColor: "red",
     color: "white"
-  }
-};
+  },
+  // Novo estilo para o botão de Excluir Perfil, usando as propriedades solicitadas
+  ButtonExcluirPerfil: {
+    backgroundColor: 'red',
+    color: 'white',
+    fontWeight: 'bold',
+    textTransform: 'none',
+    width: '150px', // Defini uma largura para que ele não fique muito pequeno/grande
+    // Mantido consistente com outros botões no estilo
+  },
+  };

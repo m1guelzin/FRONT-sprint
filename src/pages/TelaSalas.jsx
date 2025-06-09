@@ -172,8 +172,7 @@ function TelaSala() {
 
     for (const reserva of reservasParaCriar) {
       try {
-        const response = await api.criarReserva(reserva);
-        console.log("Reserva criada com sucesso:", response.data);
+        const response = await api.criarReserva(reserva); 
         reservasComSucesso++;
       } catch (error) {
         console.error("Erro ao criar reserva:", error);
