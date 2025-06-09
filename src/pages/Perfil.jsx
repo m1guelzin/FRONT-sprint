@@ -354,7 +354,7 @@ const Perfil = () => {
                     '&:last-child': { borderBottom: 'none' },
                   }}
                 >
-                  <Box onClick={() => handleOpenDetailModal(reserva)} sx={{ cursor: 'pointer', flexGrow: 1 }}>
+                  <Box  handleOpenDetailModal sx={{  flexGrow: 1 }}>
                     <Typography variant="body1" fontWeight="bold">
                       Sala: {reserva.nome_da_sala}
                     </Typography>
@@ -381,48 +381,6 @@ const Perfil = () => {
         </Box>
       </Modal>
 
-      {/* Modal de Detalhes da Reserva */}
-      <Modal
-        open={openDetailModal}
-        onClose={handleCloseDetailModal}
-        aria-labelledby="modal-title"
-        aria-describedby="modal-description"
-      >
-        <Box sx={styles.modalStyle}>
-          <Typography id="modal-title" variant="h6" component="h2" gutterBottom>
-            Detalhes da Reserva
-          </Typography>
-          {selectedReserva && (
-            <Box>
-              <Typography variant="body1">
-                <span style={{ fontWeight: 'bold' }}>Sala:</span> {selectedReserva.nome_da_sala}
-              </Typography>
-              <Typography variant="body1">
-                <span style={{ fontWeight: 'bold' }}>Data:</span> {formatarData(selectedReserva.data_reserva)}
-              </Typography>
-              <Typography variant="body1">
-                <span style={{ fontWeight: 'bold' }}>Horário de Início:</span> {selectedReserva.horario_inicio}
-              </Typography>
-              <Typography variant="body1">
-                <span style={{ fontWeight: 'bold' }}>Horário de Término:</span> {selectedReserva.horario_fim}
-              </Typography>
-              <Typography variant="body1">
-                <span style={{ fontWeight: 'bold' }}>Descrição:</span> {selectedReserva.descricao || 'N/A'}
-              </Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-                <IconButton
-                  color="error"
-                  aria-label="Deletar Reserva"
-                  onClick={() => handleDeleteReserva(selectedReserva.id_reserva)}
-                >
-                  <DeleteIcon />
-                </IconButton>
-                <Button onClick={handleCloseDetailModal} sx={{ ml: 2 }}>Fechar</Button>
-              </Box>
-            </Box>
-          )}
-        </Box>
-      </Modal>
 
       {/* RENDERIZAÇÃO DO SNACKBAR DE SUCESSO */}
       <SuccessSnackbar
