@@ -68,11 +68,6 @@ const Perfil = () => {
       } catch (error) {
         setsnackbarMessageError("Erro ao cancelar reserva. Faça Login novamente");
         setErrorSnackbarOpen(true);
-        setTimeout(() => {
-          localStorage.clear(); 
-          navigate('/login');
-        }, 2000);
-        
         if (id_usuario) {
           fetchUserReservas(id_usuario);
         }
@@ -108,10 +103,6 @@ const Perfil = () => {
         console.log("Erro ao buscar informações do usuário:", error);
         setsnackbarMessageError("Erro ao carregar seu perfil. Por favor, faça login novamente.");
         setErrorSnackbarOpen(true);
-        setTimeout(() => {
-          localStorage.clear(); 
-          navigate('/login');
-        }, 2000);
       }
     };
 
@@ -168,9 +159,6 @@ const Perfil = () => {
         (error.response?.data?.error || "Verifique os dados e tente novamente.")
       );
       setErrorSnackbarOpen(true);
-      setTimeout(() => {
-        navigate('/login'); 
-      }, 2000); 
     }
   };
 
