@@ -10,22 +10,21 @@ import {
 } from "@mui/material";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DeleteIcon from "@mui/icons-material/Delete";
-import SuccessSnackbar from '../components/SuccessSnackbar'; // Verifique se este caminho está correto
-import { useNavigate } from 'react-router-dom'; // Importe useNavigate para redirecionamento
+import SuccessSnackbar from '../components/SuccessSnackbar'; 
+import ErrorSnackbar from '../components/ErrorSnackbar'; 
+import { useNavigate } from 'react-router-dom'; 
 
 const Perfil = () => {
   const [userData, setUserData] = useState({});
   const [reservas, setReservas] = useState([]);
   const [editMode, setEditMode] = useState(false);
-  const [openDetailModal, setOpenDetailModal] = useState(false);
-  const [selectedReserva, setSelectedReserva] = useState(null);
   const [openReservasListModal, setOpenReservasListModal] = useState(false);
-
-  // ESTADOS PARA O SNACKBAR
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarMessage, setSnackbarMessage] = useState(""); 
+  const [snackbarMessageError, setsnackbarMessageError] = useState(""); 
+  const [errorSnackbarOpen, setErrorSnackbarOpen] = useState(false)
 
-  const navigate = useNavigate(); // Inicialize o hook useNavigate
+  const navigate = useNavigate(); 
 
   const handleOpenReservasListModal = () => {
     setOpenReservasListModal(true);
@@ -33,16 +32,6 @@ const Perfil = () => {
 
   const handleCloseReservasListModal = () => {
     setOpenReservasListModal(false);
-  };
-
-  const handleOpenDetailModal = (reserva) => {
-    setSelectedReserva(reserva);
-    setOpenDetailModal(true);
-  };
-
-  const handleCloseDetailModal = () => {
-    setOpenDetailModal(false);
-    setSelectedReserva(null);
   };
 
   const formatarData = (dataStr) => {
@@ -58,27 +47,32 @@ const Perfil = () => {
       const response = await api.getReservasDoUsuario(id_usuario);
       setReservas(response.data.reservas);
     } catch (error) {
-      console.error("Erro ao buscar reservas do usuário:", error);
-      setReservas([]); // Em caso de erro, trate como se não houvesse reservas
+      console.log("Erro ao buscar reservas do usuário:", error);
+      setReservas([]); 
     }
   };
 
   const handleDeleteReserva = async (id_reserva) => {
     if (window.confirm("Tem certeza que deseja cancelar esta reserva?")) {
       setReservas(prevReservas => prevReservas.filter(reserva => reserva.id_reserva !== id_reserva));
-      handleCloseDetailModal(); // Fecha o modal de detalhes
+      handleCloseReservasListModal(); 
 
       try {
-        await api.deleteReserva(id_reserva); // Chama a API para deletar
+        await api.deleteReserva(id_reserva); 
         setSnackbarMessage("Reserva cancelada com sucesso!");
         setSnackbarOpen(true);
         const id_usuario = localStorage.getItem("id_usuario");
         if (id_usuario) {
-          fetchUserReservas(id_usuario); // Re-busque as reservas para atualizar
+          fetchUserReservas(id_usuario); 
         }
       } catch (error) {
-        alert("Erro ao cancelar reserva. Tentando reverter ou sincronizar...");
-        const id_usuario = localStorage.getItem("id_usuario");
+        setsnackbarMessageError("Erro ao cancelar reserva. Faça Login novamente");
+        setErrorSnackbarOpen(true);
+        setTimeout(() => {
+          localStorage.clear(); 
+          navigate('/login');
+        }, 2000);
+        
         if (id_usuario) {
           fetchUserReservas(id_usuario);
         }
@@ -97,6 +91,7 @@ const Perfil = () => {
 
     if (!id_usuario) {
       console.log("ID do usuário não encontrado no localStorage. Redirecionando ou exibindo erro.");
+      navigate('/login'); 
       return;
     }
 
@@ -110,13 +105,19 @@ const Perfil = () => {
           senhaarmazenada: response.data.user.senha
         }));
       } catch (error) {
-        console.error("Erro ao buscar informações do usuário:", error);
+        console.log("Erro ao buscar informações do usuário:", error);
+        setsnackbarMessageError("Erro ao carregar seu perfil. Por favor, faça login novamente.");
+        setErrorSnackbarOpen(true);
+        setTimeout(() => {
+          localStorage.clear(); 
+          navigate('/login');
+        }, 2000);
       }
     };
 
     getUserInfo();
     fetchUserReservas(id_usuario);
-  }, []);
+  }, [navigate]); // Adicionado 'navigate' às dependências do useEffect
 
   const handleInputChange = (e) => {
     setUserData({
@@ -130,7 +131,7 @@ const Perfil = () => {
     const id_usuario = parseInt(id_usuario_str, 10);
 
     if (isNaN(id_usuario)) {
-      setSnackbarMessage("ID do usuário inválido. Faça login novamente.");
+      setsnackbarMessageError("ID do usuário inválido. Faça login novamente.");
       setSnackbarOpen(true);
       return;
     }
@@ -161,12 +162,15 @@ const Perfil = () => {
       }));
 
     } catch (error) {
-      console.error("Erro ao atualizar perfil:", error);
-      setSnackbarMessage(
+      console.log("Erro ao atualizar perfil:", error);
+      setsnackbarMessageError(
         "Erro ao atualizar perfil: " +
         (error.response?.data?.error || "Verifique os dados e tente novamente.")
       );
-      setSnackbarOpen(true);
+      setErrorSnackbarOpen(true);
+      setTimeout(() => {
+        navigate('/login'); 
+      }, 2000); 
     }
   };
 
@@ -174,7 +178,7 @@ const Perfil = () => {
     if (window.confirm("Tem certeza que deseja excluir seu perfil? Esta ação é irreversível.")) {
       const id_usuario = localStorage.getItem("id_usuario");
       if (!id_usuario) {
-        setSnackbarMessage("ID do usuário não encontrado. Não foi possível excluir o perfil.");
+        setsnackbarMessageError("ID do usuário não encontrado. Não foi possível excluir o perfil.");
         setSnackbarOpen(true);
         return;
       }
@@ -184,16 +188,13 @@ const Perfil = () => {
         localStorage.clear(); // Limpa os dados do usuário do localStorage
         setSnackbarMessage(response.data.message || "Perfil excluído com sucesso!");
         setSnackbarOpen(true);
-        
-        // Atrasar a navegação para que o snackbar seja visível por um tempo
         setTimeout(() => {
-          navigate('/login'); // Redireciona para a página de login
-        }, 2000); // Exibe o snackbar por 2 segundos
+          navigate('/login'); 
+        }, 2000); 
       } catch (error) {
-        console.error("Erro ao excluir perfil:", error);
-        // Exibe a mensagem de erro que vem da API
-        setSnackbarMessage(error.response?.data?.error || "Erro ao excluir perfil. Tente novamente.");
-        setSnackbarOpen(true);
+        console.log("Erro ao excluir perfil:", error);
+        setsnackbarMessageError(error.response?.data?.error || "Erro ao excluir perfil. Tente novamente.");
+        setErrorSnackbarOpen(true);
       }
     }
   };
@@ -270,7 +271,6 @@ const Perfil = () => {
           inputProps={{ readOnly: true }}
         />
 
-        {/* Botão ATUALIZAR PERFIL / Salvar / Cancelar */}
         <Box sx={{ display: "flex", gap: 2, marginTop: -10, justifyContent: "flex-end", marginRight: 24 }}>
           {!editMode ? (
             <Button
@@ -305,7 +305,7 @@ const Perfil = () => {
                           setUserData(response.data.user);
                           setUserData(prev => ({ ...prev, senha: "" }));
                       } catch (error) {
-                          console.error("Erro ao buscar informações do usuário ao cancelar:", error);
+                          console.log("Erro ao buscar informações do usuário ao cancelar:", error);
                       }
                   }
                 }}
@@ -316,7 +316,6 @@ const Perfil = () => {
           )}
         </Box>
 
-        {/* Botão EXCLUIR PERFIL - Abaixo dos outros botões, com alinhamento à direita */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2, marginRight: 24 }}>
           <Button
             variant="contained"
@@ -330,7 +329,6 @@ const Perfil = () => {
 
       </Box>
 
-      {/* Modal de Lista de Reservas */}
       <Modal
         open={openReservasListModal}
         onClose={handleCloseReservasListModal}
@@ -354,7 +352,7 @@ const Perfil = () => {
                     '&:last-child': { borderBottom: 'none' },
                   }}
                 >
-                  <Box  handleOpenDetailModal sx={{  flexGrow: 1 }}>
+                  <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="body1" fontWeight="bold">
                       Sala: {reserva.nome_da_sala}
                     </Typography>
@@ -381,13 +379,16 @@ const Perfil = () => {
         </Box>
       </Modal>
 
-
-      {/* RENDERIZAÇÃO DO SNACKBAR DE SUCESSO */}
+   
       <SuccessSnackbar
         open={snackbarOpen}
         message={snackbarMessage}
         onClose={() => setSnackbarOpen(false)}
       />
+      <ErrorSnackbar
+      open={errorSnackbarOpen}
+      message={snackbarMessageError}
+      onClose={() => setErrorSnackbarOpen(false)}/>
     </Box>
   );
 };
@@ -403,7 +404,7 @@ const styles = {
     backgroundColor: "red",
     width: "100%",
     padding: "30px",
-    display: 1, // 'display: 1' não é um valor CSS válido. Provavelmente você quer 'display: "flex"' ou 'display: "block"'. Ajustarei para "flex".
+    display: 1, 
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center", // Centraliza verticalmente
@@ -459,9 +460,9 @@ const styles = {
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: 600, // Largura maior para a lista
+    width: 600, 
     maxWidth: '90%', // Garante que não ultrapasse 90% da largura da tela
-    maxHeight: '80%', // Altura máxima para evitar que fique muito grande
+    maxHeight: '80%', 
     overflowY: 'auto', // Adiciona scroll se o conteúdo for grande
     bgcolor: 'background.paper',
     border: '2px solid #000',
@@ -485,13 +486,11 @@ const styles = {
     backgroundColor: "red",
     color: "white"
   },
-  // Novo estilo para o botão de Excluir Perfil, usando as propriedades solicitadas
   ButtonExcluirPerfil: {
     backgroundColor: 'red',
     color: 'white',
     fontWeight: 'bold',
     textTransform: 'none',
-    width: '150px', // Defini uma largura para que ele não fique muito pequeno/grande
-    // Mantido consistente com outros botões no estilo
+    width: '150px',
   },
   };

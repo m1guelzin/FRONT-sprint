@@ -2,20 +2,20 @@ import * as React from "react";
 import TextFields from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import api from "../axios/axios";
 import { useEffect } from "react";
 import { Link , useNavigate} from "react-router-dom";
-import SuccessSnackbar from '../components/SuccessSnackbar'; // Importe o SuccessSnackbar
+import SuccessSnackbar from '../components/SuccessSnackbar'; 
+import ErrorSnackbar from '../components/ErrorSnackbar'; 
 
 function Login({mensagem}) {
   const styles = getStyles();
 
   const navigate = useNavigate();
-
-  // NOVOS ESTADOS PARA O SNACKBAR
+ const [snackbarMessageError, setsnackbarMessageError] = useState(""); 
+  const [errorSnackbarOpen, setErrorSnackbarOpen] = useState(false)
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
@@ -44,8 +44,6 @@ function Login({mensagem}) {
   async function login() {
     await api.postLogin(user).then(
       (response) => {
-        // Assegura que a mensagem de sucesso do backend, se houver, seja exibida
-        // ou usa uma mensagem padrão "Login bem-sucedido"
         setSnackbarMessage(response.data.message || "Login bem-sucedido!");
         setSnackbarOpen(true);
 
@@ -54,16 +52,14 @@ function Login({mensagem}) {
         localStorage.setItem("token", response.data.token);
         console.log("Token do usuario: ", response.data.token);
         
-        // Atrasar a navegação para que o snackbar seja visível por um tempo
         setTimeout(() => {
           navigate("/inicial");
-        }, 500); // Exibe o snackbar por 2 segundos
+        }, 1000); 
       },
       (error) => {
         console.log(error);
-        // Usa o snackbar para exibir a mensagem de erro da API
-        setSnackbarMessage(error.response?.data?.error || "Erro ao fazer login. Tente novamente.");
-        setSnackbarOpen(true);
+        setsnackbarMessageError(error.response?.data?.error || "Erro ao fazer login. Tente novamente.");
+        setErrorSnackbarOpen(true);
       }
     );
   }
@@ -127,12 +123,15 @@ function Login({mensagem}) {
         </Box>
       </Box>
 
-      {/* Renderização do SuccessSnackbar */}
       <SuccessSnackbar
         open={snackbarOpen}
         message={snackbarMessage}
         onClose={() => setSnackbarOpen(false)}
       />
+    <ErrorSnackbar
+      open={errorSnackbarOpen}
+      message={snackbarMessageError}
+      onClose={() => setErrorSnackbarOpen(false)}/>
     </Box>
   );
 }

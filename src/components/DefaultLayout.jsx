@@ -10,7 +10,7 @@ const DefaultLayout = ({ children, headerRender, mensagem}) => {
         {headerRender === 1 ? (
                   <Box sx={{ display: "flex", flexDirection: "column"}}>
                   <Header mensagem={mensagem}/>
-                  {/* AQUI VEM O CONTEUDO DA PAGINA */}
+                  
                   <Box
                     sx={{
                       flex: 1,

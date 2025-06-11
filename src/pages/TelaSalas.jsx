@@ -1,27 +1,25 @@
 import { useEffect, useState, useRef } from "react";
 import { Box, Typography, TextField, Button, Modal } from "@mui/material";
 import api from "../axios/axios";
-
-// NOVO: Importe o SuccessSnackbar
 import SuccessSnackbar from '../components/SuccessSnackbar';
+import { useNavigate } from 'react-router-dom'; 
+import ErrorSnackbar from '../components/ErrorSnackbar'; 
 
 function TelaSala() {
   const [salasDisponiveis, setSalasDisponiveis] = useState([]);
-  const [horariosDisponiveisPorSala, setHorariosDisponiveisPorSala] = useState(
-    {}
-  );
+  const [horariosDisponiveisPorSala, setHorariosDisponiveisPorSala] = useState({});
   const [dataSelecionada, setDataSelecionada] = useState("");
   const [salaSelecionada, setSalaSelecionada] = useState(null);
   const [horariosSelecionados, setHorariosSelecionados] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
-
-  // NOVO: Estados para o Snackbar (open e message)
+  const [snackbarMessageError, setsnackbarMessageError] = useState(""); 
+  const [errorSnackbarOpen, setErrorSnackbarOpen] = useState(false)
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const horariosPanelRef = useRef(null);
+  const navigate = useNavigate(); 
 
-  // NOVO: Função para fechar o Snackbar
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
@@ -44,10 +42,15 @@ function TelaSala() {
               setSalaSelecionada(null);
           }
         } catch (error) {
-          console.error("Erro ao buscar salas disponíveis:", error);
+          console.log("Erro ao buscar salas disponíveis:", error);
           setSalasDisponiveis([]);
-          setSnackbarMessage("Erro ao buscar salas disponíveis.");
-          setSnackbarOpen(true);
+          setsnackbarMessageError("Sua sessão expirou. Por favor, faça login novamente.");
+          setErrorSnackbarOpen(true);
+          setTimeout(() => {
+            localStorage.clear();
+            navigate('/login');
+          }, 1500);
+          return;
         }
       } else {
         setSalasDisponiveis([]);
@@ -57,7 +60,7 @@ function TelaSala() {
     }
 
     buscarSalasDisponiveis();
-  }, [dataSelecionada]);
+  }, [dataSelecionada, salaSelecionada]); 
 
   useEffect(() => {
     async function buscarHorariosDisponiveis() {
@@ -72,10 +75,14 @@ function TelaSala() {
           });
           setHorariosDisponiveisPorSala(horariosOrganizados);
         } catch (error) {
-          console.error("Erro ao buscar horários disponíveis:", error);
-          // NOVO: Usar Snackbar em caso de erro na busca (opcional)
-          setSnackbarMessage("Erro ao buscar horários disponíveis.");
-          setSnackbarOpen(true);
+          console.log("Erro ao buscar horários disponíveis:", error);
+          setsnackbarMessageError("Sua sessão expirou. Por favor, faça login novamente.");
+          setErrorSnackbarOpen(true);
+          setTimeout(() => {
+            localStorage.clear();
+            navigate('/login');
+          }, 1500);
+          return;
         }
       } else {
         setHorariosDisponiveisPorSala({});
@@ -91,9 +98,8 @@ function TelaSala() {
     const dataAtual = new Date().toISOString().split("T")[0];
 
     if (selectedDate < dataAtual) {
-      // NOVO: Usar Snackbar em vez de alert
-      setSnackbarMessage("A reserva não pode ser feita para uma data no passado.");
-      setSnackbarOpen(true);
+      setsnackbarMessageError("A reserva não pode ser feita para uma data no passado.");
+      setErrorSnackbarOpen(true);
       setDataSelecionada("");
     } else {
       setDataSelecionada(selectedDate);
@@ -105,9 +111,11 @@ function TelaSala() {
     setHorariosSelecionados([]);
 
     if (horariosPanelRef.current) {
-      horariosPanelRef.current.scrollIntoView({
-        behavior: "smooth", // Para um scroll suave
-        block: "start",      // Alinha o topo do elemento com o topo da janela/viewport
+      const elementPosition = horariosPanelRef.current.getBoundingClientRect().top;
+      
+      window.scrollTo({
+        top: elementPosition - 100, // Ajuste para rolar um pouco acima do elemento
+        behavior: "smooth",
       });
     }
   }
@@ -128,7 +136,6 @@ function TelaSala() {
     if (horariosSelecionados.length > 0 && salaSelecionada && dataSelecionada) {
       setModalAberto(true);
     } else {
-      // NOVO: Usar Snackbar em vez de alert
       setSnackbarMessage("Por favor, selecione pelo menos um horário, uma sala e uma data.");
       setSnackbarOpen(true);
     }
@@ -140,7 +147,6 @@ function TelaSala() {
 
   const handleConfirmarReservas = async () => {
     if (!salaSelecionada || !dataSelecionada || horariosSelecionados.length === 0) {
-      // NOVO: Usar Snackbar em vez de alert
       setSnackbarMessage("Por favor, selecione a sala, data e pelo menos um horário.");
       setSnackbarOpen(true);
       return;
@@ -148,9 +154,12 @@ function TelaSala() {
 
     const userId = localStorage.getItem("id_usuario");
     if (!userId) {
-        // NOVO: Usar Snackbar em vez de alert
-        setSnackbarMessage("ID do usuário não encontrado. Faça login novamente.");
-        setSnackbarOpen(true);
+      setsnackbarMessageError("ID do usuário não encontrado. Faça login novamente.");
+        setErrorSnackbarOpen(true);
+        setTimeout(() => {
+          localStorage.clear();
+          navigate('/login');
+        }, 1500);
         return;
     }
 
@@ -172,33 +181,52 @@ function TelaSala() {
 
     for (const reserva of reservasParaCriar) {
       try {
-        const response = await api.criarReserva(reserva); 
+        await api.criarReserva(reserva); 
         reservasComSucesso++;
       } catch (error) {
-        console.error("Erro ao criar reserva:", error);
+        console.log("Erro ao criar reserva:", error);
         reservasComErro++;
-        mensagensErro.push(`Conflito para ${reserva.horario_inicio}-${reserva.horario_fim} na sala ${salaSelecionada.nome_da_sala}: ${error.response?.data?.error || "Erro desconhecido."}`);
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          setsnackbarMessageError("Sua sessão expirou. Por favor, faça login novamente.");
+          setErrorSnackbarOpen(true);
+          setModalAberto(false); // Fecha o modal
+          setTimeout(() => {
+            localStorage.clear();
+            navigate('/login');
+          }, 2000); // Redireciona após 2 segundos para o usuário ver a mensagem
+          return; // Para o loop e a função
+        }
       }
     }
 
     setModalAberto(false);
 
-    // NOVO: Lógica de exibição do Snackbar de SUCESSO (ou erro genérico)
     if (reservasComSucesso > 0 && reservasComErro === 0) {
         setSnackbarMessage(`${reservasComSucesso} reserva(s) criada com sucesso!`);
         setSnackbarOpen(true);
-    } else if (reservasComSucesso > 0 && reservasComErro > 0) {
-        setSnackbarMessage(`Algumas reservas foram criadas (${reservasComSucesso}), mas houveram erros em outras (${reservasComErro}).`);
-        setSnackbarOpen(true);
-        console.warn("Detalhes dos erros de reserva:", mensagensErro.join("\n"));
+    
     } else {
-        setSnackbarMessage(`Nenhuma reserva foi criada. Erros: ${mensagensErro.join("\n")}`);
-        setSnackbarOpen(true);
+      setsnackbarMessageError(`Nenhuma reserva foi criada. Erros: ${mensagensErro.join(" | ")}`);
+      setErrorSnackbarOpen(true);
     }
 
-    setSalaSelecionada(null);
-    setHorariosSelecionados([]);
-    setDataSelecionada("");
+    if (dataSelecionada) {
+        try {
+            const salasResponse = await api.getSalasDisponiveisPorData(dataSelecionada);
+            setSalasDisponiveis(salasResponse.data.salas_disponiveis);
+            const horariosResponse = await api.getSalasHorariosDisponiveis(dataSelecionada);
+            const horariosOrganizados = {};
+            horariosResponse.data.salas.forEach((sala) => {
+              horariosOrganizados[sala.id_sala] = sala.horarios_disponiveis;
+            });
+            setHorariosDisponiveisPorSala(horariosOrganizados);
+        } catch (error) {
+            console.log("Erro ao re-buscar dados após reserva:", error);
+        }
+    }
+
+    setSalaSelecionada(null); // Limpa a seleção da sala
+    setHorariosSelecionados([]); // Limpa os horários selecionados
   };
 
   const horariosDisponiveisParaEstaSala = salaSelecionada
@@ -208,7 +236,6 @@ function TelaSala() {
   return (
     <Box sx={styles.container}>
       <Box sx={styles.boxWrapper}>
-        {/* Painel Esquerdo: Salas Disponíveis */}
         <Box sx={styles.leftPanel}>
           <Box sx={styles.leftPanelTop}>
             <Box sx={styles.title}>
@@ -305,7 +332,6 @@ function TelaSala() {
         </Box>
       </Box>
 
-      {/* Modal de Confirmação */}
       <Modal
         open={modalAberto}
         onClose={handleFecharModal}
@@ -408,15 +434,18 @@ function TelaSala() {
       <SuccessSnackbar
         open={snackbarOpen}
         message={snackbarMessage}
-        onClose={handleCloseSnackbar} // Use a função criada para fechar
+        onClose={handleCloseSnackbar}
       />
+      <ErrorSnackbar
+      open={errorSnackbarOpen}
+      message={snackbarMessageError}
+      onClose={() => setErrorSnackbarOpen(false)}/>
     </Box>
   );
 }
 
 export default TelaSala;
 
-// --- Estilos CSS (mantidos os relevantes) ---
 const styles = {
   container: {
     backgroundColor: "red",
@@ -483,7 +512,7 @@ const styles = {
   },
   horariosGrid: {
     flexDirection: "row",
-    fleWrap: "wrap",
+    flexWrap: "wrap", // Corrigido de 'fleWrap' para 'flexWrap'
     justifyContent: "space-between",
   },
   horarioButton: {

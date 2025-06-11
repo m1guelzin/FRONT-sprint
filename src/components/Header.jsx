@@ -8,6 +8,7 @@ const Header = ({mensagem}) => {
     return (
         <Box sx={styles.header}>
         <Typography sx={styles.headerText}>{mensagem}</Typography>
+        
       </Box>
     );
   };

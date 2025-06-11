@@ -2,19 +2,19 @@ import * as React from "react";
 import TextFields from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import api from "../axios/axios";
 import { Link , useNavigate} from "react-router-dom";
 import { useEffect } from "react";
-import SuccessSnackbar from '../components/SuccessSnackbar'; // Importe o SuccessSnackbar
+import SuccessSnackbar from '../components/SuccessSnackbar'; 
+import ErrorSnackbar from '../components/ErrorSnackbar'; 
 
 function Cadastro() {
   const styles = getStyles();
   const navigate = useNavigate();
-
-  // NOVOS ESTADOS PARA O SNACKBAR
+  const [snackbarMessageError, setsnackbarMessageError] = useState(""); 
+  const [errorSnackbarOpen, setErrorSnackbarOpen] = useState(false)
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
@@ -45,22 +45,18 @@ function Cadastro() {
   async function cadastro() {
     await api.postCadastro(user).then(
       (response) => {
-        // Usa o snackbar para exibir a mensagem de sucesso da API ou padrão
         setSnackbarMessage(response.data.message || "Usuário criado com sucesso!");
         setSnackbarOpen(true);
         
         // Atrasar a navegação para que o snackbar seja visível por um tempo
         setTimeout(() => {
-          // Não define localStorage.setItem("authenticated", true); aqui
-          // pois o usuário ainda precisará fazer login.
           navigate("/login");
-        }, 500); // Exibe o snackbar por 2 segundos
+        }, 1000); 
       },
       (error) => {
         console.log(error);
-        // Usa o snackbar para exibir a mensagem de erro da API
-        setSnackbarMessage(error.response?.data?.error || "Erro ao criar usuário. Tente novamente.");
-        setSnackbarOpen(true);
+        setsnackbarMessageError(error.response?.data?.error || "Erro ao criar usuário. Tente novamente.");
+        setErrorSnackbarOpen(true);
       }
     );
   }
@@ -158,13 +154,15 @@ function Cadastro() {
           </Box>
         </Box>
       </Box>
-
-      {/* Renderização do SuccessSnackbar */}
       <SuccessSnackbar
         open={snackbarOpen}
         message={snackbarMessage}
         onClose={() => setSnackbarOpen(false)}
       />
+      <ErrorSnackbar
+      open={errorSnackbarOpen}
+      message={snackbarMessageError}
+      onClose={() => setErrorSnackbarOpen(false)}/>
     </Box>
   );
 }
