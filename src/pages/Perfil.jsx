@@ -121,12 +121,6 @@ const Perfil = () => {
     const id_usuario_str = localStorage.getItem("id_usuario");
     const id_usuario = parseInt(id_usuario_str, 10);
 
-    if (isNaN(id_usuario)) {
-      setsnackbarMessageError("ID do usuário inválido. Faça login novamente.");
-      setSnackbarOpen(true);
-      return;
-    }
-
     const senhaParaEnviar = userData.senha.trim() !== "" ? userData.senha : userData.senhaarmazenada;
 
     const dataToUpdate = {

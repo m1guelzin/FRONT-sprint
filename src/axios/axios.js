@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://10.89.240.85:3000/project-senai/api/v1/",
+  baseURL: "http://10.89.240.86:3000/project-senai/api/v1/",
   headers: { accept: "application/json" },
 });
 
